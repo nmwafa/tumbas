@@ -13,11 +13,29 @@ const PORT = 3000;
 
 // Menyimpan jumlah percobaan login per klien untuk membatasi brute force.
 const loginAttempts = new Map();
+const MAX_LOGIN_ATTEMPTS = 3;
+const LOGIN_ATTEMPT_RESET_MS = 2 * 60 * 1000;
 
 // Mengambil identitas klien yang melakukan request untuk kebutuhan rate limiting login.
 const getClientKey = (req) => {
   const forwardedFor = req.headers['x-forwarded-for'];
   return (forwardedFor ? forwardedFor.split(',')[0].trim() : req.ip) || 'unknown';
+};
+
+// Mengambil jumlah percobaan login yang belum kedaluwarsa untuk klien tertentu.
+const getFailedAttempts = (clientKey) => {
+  const attempts = loginAttempts.get(clientKey);
+
+  if (!attempts) {
+    return 0;
+  }
+
+  if (Date.now() > attempts.expiresAt) {
+    loginAttempts.delete(clientKey);
+    return 0;
+  }
+
+  return attempts.count;
 };
 
 // Konfigurasi upload file gambar ke folder img di project.
@@ -105,9 +123,9 @@ app.get('/4dm1n/dashboard', (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   const clientKey = getClientKey(req);
-  const failedAttempts = loginAttempts.get(clientKey) || 0;
+  const failedAttempts = getFailedAttempts(clientKey);
 
-  if (failedAttempts >= 3) {
+  if (failedAttempts >= MAX_LOGIN_ATTEMPTS) {
     return res.status(429).json({ error: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' });
   }
 
@@ -121,9 +139,12 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const nextFailedAttempts = failedAttempts + 1;
-  loginAttempts.set(clientKey, nextFailedAttempts);
+  loginAttempts.set(clientKey, {
+    count: nextFailedAttempts,
+    expiresAt: Date.now() + LOGIN_ATTEMPT_RESET_MS
+  });
 
-  if (nextFailedAttempts >= 3) {
+  if (nextFailedAttempts >= MAX_LOGIN_ATTEMPTS) {
     return res.status(429).json({ error: 'Percobaan login salah melebihi batas. Silakan coba lagi nanti.' });
   }
 

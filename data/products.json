@@ -104,5 +104,27 @@
         "maps_url": "https://maps.google.com/?q=Purworejo"
       }
     ]
+  },
+  {
+    "id": "prod_5",
+    "name": "Keripik Singkong Pedas Manis",
+    "category_tab": "umum",
+    "price_range": "Rp 12.000 - Rp 20.000",
+    "description": "Camilan keripik singkong renyah dengan balutan bumbu pedas manis buatan UMKM lokal.",
+    "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500",
+    "sellers": [
+      {
+        "name": "Snack Sejahtera",
+        "phone": "6289876543210",
+        "address": "Jl. Brigjen Katamso No. 4, Purworejo",
+        "maps_url": "https://maps.google.com/?q=Purworejo"
+      },
+      {
+        "name": "Toko Oleh-Oleh Nusantara",
+        "phone": "6289876543210",
+        "address": "Jl. Pemuda No. 10, Purworejo",
+        "maps_url": "https://maps.google.com/?q=Purworejo"
+      }
+    ]
   }
 ]
