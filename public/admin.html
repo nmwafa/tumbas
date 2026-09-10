@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - UMKM Purworejo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-green-50 min-h-screen text-gray-800" x-data="adminApp()">
+
+  <!-- View Login -->
+  <div x-show="!isLoggedIn" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-xl shadow-md max-w-sm w-full">
+      <h2 class="text-xl font-bold mb-4 text-center">Login Administrator</h2>
+      <form @submit.prevent="login">
+        <div class="mb-3">
+          <label class="text-xs font-semibold text-gray-600">Username</label>
+          <input type="text" x-model="formLogin.username" class="w-full border rounded px-3 py-2 text-sm mt-1 focus:outline-none" required>
+        </div>
+        <div class="mb-4">
+          <label class="text-xs font-semibold text-gray-600">Password</label>
+          <input type="password" x-model="formLogin.password" class="w-full border rounded px-3 py-2 text-sm mt-1 focus:outline-none" required>
+        </div>
+        <p x-show="errorMessage" class="text-red-600 text-xs mb-3" x-text="errorMessage"></p>
+        <button type="submit" class="w-full bg-emerald-600 text-white py-2 rounded text-sm font-semibold hover:bg-emerald-700">Masuk</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Dashboard -->
+  <div x-show="isLoggedIn" x-cloak>
+    <nav class="bg-white border-b px-6 py-4 flex justify-between items-center">
+      <h1 class="font-bold text-lg">Panel Manajemen Produk</h1>
+      <button @click="logout" class="text-sm text-red-600 font-semibold hover:underline">Keluar</button>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold">Daftar Produk</h2>
+        <button @click="openModalTambah" class="bg-emerald-600 text-white text-sm px-4 py-2 rounded font-medium hover:bg-emerald-700">+ Tambah Produk</button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-gray-50 border-b text-gray-600">
+            <tr>
+              <th class="p-4">Nama Produk</th>
+              <th class="p-4">Tab Kategori</th>
+              <th class="p-4">Jumlah Penjual</th>
+              <th class="p-4 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="p in products" :key="p.id">
+              <tr class="border-b hover:bg-gray-50">
+                <td class="p-4 font-semibold" x-text="p.name"></td>
+                <td class="p-4">
+                  <span :class="p.category_tab === 'khas' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'" class="px-2 py-0.5 rounded text-xs uppercase font-bold" x-text="p.category_tab"></span>
+                </td>
+                <td class="p-4" x-text="p.sellers.length"></td>
+                <td class="p-4 text-center">
+                  <button @click="deleteProduct(p.id)" class="text-xs text-red-600 font-semibold hover:underline">Hapus</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function adminApp() {
+      return {
+        isLoggedIn: false,
+        products: [],
+        errorMessage: '',
+        formLogin: { username: '', password: '' },
+        async init() {
+          const res = await fetch('/api/auth/status');
+          const data = await res.json();
+          this.isLoggedIn = data.loggedIn;
+          if (this.isLoggedIn) this.loadProducts();
+        },
+        async login() {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.formLogin)
+          });
+          const data = await res.json();
+          if (res.ok) {
+            this.isLoggedIn = true;
+            this.errorMessage = '';
+            this.loadProducts();
+          } else {
+            this.errorMessage = data.error;
+          }
+        },
+        async logout() {
+          await fetch('/api/auth/logout', { method: 'POST' });
+          this.isLoggedIn = false;
+        },
+        async loadProducts() {
+          const res = await fetch('/api/products');
+          this.products = await res.json();
+        },
+        async deleteProduct(id) {
+          if (!confirm('Yakin ingin menghapus produk ini?')) return;
+          await fetch(`/api/products/${id}`, { method: 'DELETE' });
+          this.loadProducts();
+        },
+        openModalTambah() {
+          alert('Modal penambahan produk dapat diimplementasikan di sini untuk mengisi data JSON.');
+        }
+      }
+    }
+  </script>
+</body>
+</html>

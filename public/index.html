@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Katalog Produk UMKM Purworejo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-green-50 text-gray-800" x-data="katalogApp()">
+
+  <!-- Navbar -->
+  <header class="bg-white border-b sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl font-black text-emerald-600">PURWOREJO</span>
+      </div>
+      <input type="text" x-model="searchQuery" placeholder="Cari nama produk..." 
+             class="w-full sm:w-80 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+    </div>
+
+    <!-- Navigasi 2 Tab -->
+    <div class="max-w-6xl mx-auto px-4 flex border-t border-gray-100">
+      <button @click="activeTab = 'khas'" :class="activeTab === 'khas' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-gray-500'" 
+              class="py-3 px-6 border-b-2 text-sm transition">Produk Khas Purworejo</button>
+      <button @click="activeTab = 'umum'" :class="activeTab === 'umum' ? 'border-emerald-600 text-emerald-600 font-bold' : 'border-transparent text-gray-500'" 
+              class="py-3 px-6 border-b-2 text-sm transition">UMKM Umum</button>
+    </div>
+  </header>
+
+  <!-- Grid Produk -->
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <template x-for="product in filteredProducts" :key="product.id">
+        <div @click="selectProduct(product)" class="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 overflow-hidden cursor-pointer flex flex-col transition">
+          <img :src="product.image" :alt="product.name" class="h-48 w-full object-cover">
+          <div class="p-4 flex-1 flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-gray-900 leading-snug" x-text="product.name"></h3>
+              <p class="text-xs text-emerald-700 font-semibold mt-1" x-text="product.price_range"></p>
+              <p class="text-xs text-gray-500 mt-2 line-clamp-2" x-text="product.description"></p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+              <span x-text="product.sellers.length + ' Penjual Tersedia'"></span>
+              <span class="text-emerald-600 font-semibold">Lihat Kontak &rarr;</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+  </main>
+
+  <!-- Modal Detail & Seller Contacts -->
+  <div x-show="selectedProduct" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" x-cloak>
+    <div @click.away="selectedProduct = null" class="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start">
+        <h2 class="text-xl font-bold text-gray-900" x-text="selectedProduct?.name"></h2>
+        <button @click="selectedProduct = null" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+      </div>
+      <p class="text-sm text-gray-600 mt-2" x-text="selectedProduct?.description"></p>
+
+      <div class="mt-6 border-t pt-4">
+        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Daftar Penjual / Lokasi</h4>
+        <div class="space-y-3">
+          <template x-for="seller in selectedProduct?.sellers" :key="seller.name">
+            <div class="p-3 border rounded-lg bg-gray-50 flex flex-col gap-2">
+              <div>
+                <p class="font-semibold text-sm text-gray-900" x-text="seller.name"></p>
+                <p class="text-xs text-gray-500" x-text="seller.address"></p>
+              </div>
+              <div class="flex gap-2 mt-1">
+                <a :href="'https://wa.me/' + seller.phone + '?text=' + encodeURIComponent('Halo, saya melihat produk ' + selectedProduct.name + ' di Katalog UMKM Purworejo.')" 
+                   target="_blank" class="flex-1 bg-green-600 text-white text-xs text-center py-2 px-3 rounded-md font-medium hover:bg-green-700">WhatsApp</a>
+                <a :href="seller.maps_url" target="_blank" 
+                   class="bg-blue-600 text-white text-xs text-center py-2 px-3 rounded-md font-medium hover:bg-blue-700">Google Maps</a>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function katalogApp() {
+      return {
+        activeTab: 'khas',
+        searchQuery: '',
+        products: [],
+        selectedProduct: null,
+        async init() {
+          const res = await fetch('/api/products');
+          this.products = await res.json();
+        },
+        get filteredProducts() {
+          return this.products.filter(p => {
+            const matchesTab = p.category_tab === this.activeTab;
+            const matchesSearch = p.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+            return matchesTab && matchesSearch;
+          });
+        },
+        selectProduct(p) {
+          this.selectedProduct = p;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
