@@ -115,7 +115,7 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(429).json({ error: 'Percobaan login salah melebihi batas. Silakan coba lagi nanti.' });
   }
 
-  res.status(401).json({ error: `Username atau password salah (${nextFailedAttempts}/3)` });
+  res.status(401).json({ error: 'Username atau password salah!' });
 });
 
 app.get('/api/auth/status', (req, res) => {

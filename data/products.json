@@ -18,6 +18,24 @@
         "phone": "6281234567890",
         "address": "Jl. yang penting jalan",
         "maps_url": "https://maps.google.com/?q=Purworejo"
+      },
+      {
+        "name": "Toko Oleh-Oleh Purworejo",
+        "phone": "6281234567890",
+        "address": "Jl. Pemuda No. 10, Purworejo",
+        "maps_url": "https://maps.google.com/?q=Purworejo"
+      },
+      {
+        "name": "Snack Purworejo",
+        "phone": "6281234567890",
+        "address": "Jl. Diponegoro No. 5, Purworejo",
+        "maps_url": "https://maps.google.com/?q=Purworejo"
+      },
+      {
+        "name": "Warung Oleh-Oleh Khas",
+        "phone": "6281234567890",
+        "address": "Jl. Ahmad Yani No. 20, Purworejo",
+        "maps_url": "https://maps.google.com/?q=Purworejo"
       }
     ]
   },

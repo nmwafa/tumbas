@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - UMKM Purworejo</title>
+  <link rel="icon" type="image/png" href="/img/icon.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -11,13 +12,13 @@
   <nav class="bg-white/90 border-b border-emerald-100 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shadow-sm backdrop-blur-sm">
     <div class="flex items-center gap-3 min-w-0">
       <a href="/" class="inline-flex items-center">
-        <img src="/img/logo.png" alt="Logo Tumbas" class="h-10 w-auto max-w-[180px] sm:h-12 sm:max-w-[220px] object-contain">
+        <img src="/img/logo.jfif" alt="Logo Tumbas" class="h-10 w-auto max-w-[180px] sm:h-12 sm:max-w-[220px] object-contain">
       </a>
     </div>
     <button @click="logout" class="text-sm text-red-600 font-semibold hover:underline">Keluar</button>
   </nav>
 
-  <main class="max-w-5xl mx-auto p-6">
+  <main class="max-w-5xl mx-auto p-6 min-h-[calc(100vh-100px)] bg-emerald-50/70 rounded-2xl">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-xl font-semibold text-gray-800">Daftar Produk</h2>
       <button @click="openModalTambah" class="bg-emerald-600 text-white text-sm px-4 py-2.5 rounded-xl font-medium hover:bg-emerald-700 shadow-md shadow-emerald-200 transition">+ Tambah Produk</button>
@@ -42,7 +43,7 @@
               </td>
               <td class="p-4" x-text="p.sellers.length"></td>
               <td class="p-4 text-center">
-                <button @click="deleteProduct(p.id)" class="text-xs text-red-600 font-semibold hover:underline">Hapus</button>
+                <button @click="openDeleteModal(p)" class="text-xs text-red-600 font-semibold hover:underline">Hapus</button>
               </td>
             </tr>
           </template>
@@ -50,6 +51,26 @@
       </table>
     </div>
   </main>
+
+  <div x-show="deleteTarget" x-cloak class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div @click.away="closeDeleteModal" class="bg-white rounded-[28px] max-w-md w-full p-6 border border-red-100/80 ring-1 ring-red-100 shadow-[0_24px_70px_rgba(239,68,68,0.18)]">
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">!</div>
+        <div class="flex-1">
+          <h3 class="text-xl font-bold text-gray-900">Hapus Produk</h3>
+          <p class="mt-2 text-sm text-gray-600">
+            Apakah Anda yakin ingin menghapus produk
+            <span class="font-semibold text-gray-900" x-text="deleteTarget?.name"></span>?
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" @click="closeDeleteModal" class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">Batal</button>
+        <button type="button" @click="confirmDeleteProduct" class="px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 shadow-md shadow-red-200 transition">Hapus Produk</button>
+      </div>
+    </div>
+  </div>
 
   <div x-show="showAddProductModal" x-cloak class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div @click.away="closeModalTambah" class="bg-white rounded-[28px] max-w-xl w-full p-6 border border-emerald-100/80 ring-1 ring-emerald-100 shadow-[0_24px_70px_rgba(16,185,129,0.18)]">
@@ -118,6 +139,7 @@
       return {
         products: [],
         showAddProductModal: false,
+        deleteTarget: null,
         imageSource: 'url',
         selectedImageFile: null,
         formProduct: {
@@ -147,10 +169,20 @@
           await fetch('/api/auth/logout', { method: 'POST' });
           window.location.href = '/4dm1n';
         },
-        async deleteProduct(id) {
-          if (!confirm('Yakin ingin menghapus produk ini?')) return;
-          await fetch(`/api/products/${id}`, { method: 'DELETE' });
-          this.loadProducts();
+        openDeleteModal(product) {
+          this.deleteTarget = product;
+        },
+        closeDeleteModal() {
+          this.deleteTarget = null;
+        },
+        async confirmDeleteProduct() {
+          if (!this.deleteTarget) return;
+
+          const productId = this.deleteTarget.id;
+          this.closeDeleteModal();
+
+          await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+          await this.loadProducts();
         },
         openModalTambah() {
           this.showAddProductModal = true;
