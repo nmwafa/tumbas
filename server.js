@@ -4,10 +4,25 @@ import bcrypt from 'bcryptjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import multer from 'multer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = 3000;
+
+const storage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const targetDir = path.join(__dirname, 'img');
+    await fs.mkdir(targetDir, { recursive: true });
+    cb(null, targetDir);
+  },
+  filename: (req, file, cb) => {
+    const safeName = Date.now() + '-' + file.originalname.replace(/\s+/g, '-');
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({ storage });
 
 app.use(express.json());
 
@@ -42,6 +57,14 @@ const requireAuth = (req, res, next) => {
 app.get('/api/products', async (req, res) => {
   const products = await readData('products.json');
   res.json(products);
+});
+
+app.post('/api/products/upload', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'File gambar tidak ditemukan' });
+  }
+
+  res.json({ image: `/img/${req.file.filename}` });
 });
 
 app.get('/4dm1n', (req, res) => {

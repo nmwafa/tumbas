@@ -8,8 +8,12 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gradient-to-br from-emerald-50 via-white to-lime-50 min-h-screen text-gray-800" x-data="adminDashboardApp()">
-  <nav class="bg-white/90 border-b border-emerald-100 px-6 py-4 flex justify-between items-center shadow-sm backdrop-blur-sm">
-    <h1 class="font-bold text-lg text-gray-800">Panel Manajemen Produk</h1>
+  <nav class="bg-white/90 border-b border-emerald-100 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shadow-sm backdrop-blur-sm">
+    <div class="flex items-center gap-3 min-w-0">
+      <a href="/" class="inline-flex items-center">
+        <img src="/img/logo.png" alt="Logo Tumbas" class="h-10 w-auto max-w-[180px] sm:h-12 sm:max-w-[220px] object-contain">
+      </a>
+    </div>
     <button @click="logout" class="text-sm text-red-600 font-semibold hover:underline">Keluar</button>
   </nav>
 
@@ -47,10 +51,83 @@
     </div>
   </main>
 
+  <div x-show="showAddProductModal" x-cloak class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div @click.away="closeModalTambah" class="bg-white rounded-[28px] max-w-xl w-full p-6 border border-emerald-100/80 ring-1 ring-emerald-100 shadow-[0_24px_70px_rgba(16,185,129,0.18)]">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-xl font-bold text-gray-900">Tambah Produk</h3>
+        <button @click="closeModalTambah" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+
+      <form @submit.prevent="submitProduct" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Produk</label>
+            <input x-model="formProduct.name" type="text" class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" required>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Kategori</label>
+            <select x-model="formProduct.category_tab" class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" required>
+              <option value="khas">Khas</option>
+              <option value="umum">Umum</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Harga / Rentang Harga</label>
+            <input x-model="formProduct.price_range" type="text" class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" placeholder="Contoh: Rp 10.000 - Rp 20.000" required>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Gambar Produk</label>
+            <div class="flex gap-2 mb-2">
+              <button type="button" @click="imageSource = 'url'" :class="imageSource === 'url' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'" class="flex-1 rounded-xl px-3 py-2 text-xs font-semibold transition">
+                Dari URL
+              </button>
+              <button type="button" @click="imageSource = 'upload'" :class="imageSource === 'upload' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'" class="flex-1 rounded-xl px-3 py-2 text-xs font-semibold transition">
+                Upload File
+              </button>
+            </div>
+
+            <input x-show="imageSource === 'url'" x-model="formProduct.image" type="url" class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" placeholder="https://..." required>
+
+            <div x-show="imageSource === 'upload'" class="space-y-2">
+              <input type="file" accept="image/*" @change="handleImageFileChange" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-emerald-600 file:text-white file:text-xs file:font-semibold hover:file:bg-emerald-700">
+              <p class="text-[11px] text-gray-500" x-text="selectedImageFile ? 'File terpilih: ' + selectedImageFile.name : 'Belum ada file yang dipilih'"></p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi</label>
+          <textarea x-model="formProduct.description" rows="4" class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" required></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" @click="closeModalTambah" class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">Batal</button>
+          <button type="submit" class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 shadow-md shadow-emerald-200 transition">Simpan Produk</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     function adminDashboardApp() {
       return {
         products: [],
+        showAddProductModal: false,
+        imageSource: 'url',
+        selectedImageFile: null,
+        formProduct: {
+          name: '',
+          category_tab: 'khas',
+          price_range: '',
+          image: '',
+          description: '',
+          sellers: []
+        },
         async init() {
           const statusRes = await fetch('/api/auth/status');
           const status = await statusRes.json();
@@ -76,7 +153,73 @@
           this.loadProducts();
         },
         openModalTambah() {
-          alert('Modal penambahan produk dapat diimplementasikan di sini untuk mengisi data JSON.');
+          this.showAddProductModal = true;
+        },
+        closeModalTambah() {
+          this.showAddProductModal = false;
+          this.imageSource = 'url';
+          this.selectedImageFile = null;
+          this.formProduct = {
+            name: '',
+            category_tab: 'khas',
+            price_range: '',
+            image: '',
+            description: '',
+            sellers: []
+          };
+        },
+        handleImageFileChange(event) {
+          this.selectedImageFile = event.target.files[0] || null;
+        },
+        async submitProduct() {
+          const payload = {
+            ...this.formProduct,
+            sellers: []
+          };
+
+          if (this.imageSource === 'upload') {
+            if (!this.selectedImageFile) {
+              alert('Pilih file gambar produk terlebih dahulu');
+              return;
+            }
+
+            const uploadFormData = new FormData();
+            uploadFormData.append('image', this.selectedImageFile);
+
+            const uploadRes = await fetch('/api/products/upload', {
+              method: 'POST',
+              body: uploadFormData
+            });
+
+            const uploadData = await uploadRes.json();
+
+            if (!uploadRes.ok) {
+              alert(uploadData.error || 'Gagal mengupload gambar');
+              return;
+            }
+
+            payload.image = uploadData.image;
+          } else {
+            if (!payload.image || !payload.image.trim()) {
+              alert('Masukkan URL gambar produk');
+              return;
+            }
+          }
+
+          const res = await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const data = await res.json();
+            alert(data.error || 'Gagal menambah produk');
+            return;
+          }
+
+          this.closeModalTambah();
+          await this.loadProducts();
         }
       }
     }
