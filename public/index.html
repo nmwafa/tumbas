@@ -112,7 +112,7 @@
 
   <!-- Modal Detail & Seller Contacts -->
   <div x-show="selectedProduct" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-cloak>
-    <div @click.away="selectedProduct = null" class="bg-white rounded-[28px] max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto custom-scrollbar shadow-[0_24px_70px_rgba(16,185,129,0.18)] border border-emerald-100/80 ring-1 ring-emerald-100">
+    <div @click.away="selectedProduct = null" class="bg-white rounded-3xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto custom-scrollbar shadow-[0_24px_70px_rgba(16,185,129,0.18)] border border-emerald-100/80 ring-1 ring-emerald-100">
       <div class="flex justify-between items-start gap-4">
         <h2 class="text-xl font-bold text-gray-900" x-text="selectedProduct?.name"></h2>
         <button @click="selectedProduct = null" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
