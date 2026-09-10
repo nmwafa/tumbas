@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard - UMKM Purworejo</title>
-  <link rel="icon" type="image/png" href="/img/icon.png">
+  <link rel="icon" type="image/png" href="../img/icon.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
@@ -12,6 +12,43 @@
 
     body {
       font-family: 'Nunito', sans-serif;
+    }
+
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(16, 185, 129, 0.75) rgba(16, 185, 129, 0.07);
+      -ms-overflow-style: auto;
+      scroll-behavior: smooth;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(16, 185, 129, 0.06);
+      border-radius: 12px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(52, 211, 153, 0.85), rgba(16, 185, 129, 0.8));
+      border-radius: 12px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      min-height: 36px;
+      box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.12);
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.92), rgba(5, 150, 105, 0.9));
+      box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.22);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-button {
+      display: none;
+      height: 0;
+      width: 0;
     }
   </style>
 </head>
@@ -22,7 +59,7 @@
         <img src="/img/logo.jfif" alt="Logo Tumbas" class="h-10 w-auto max-w-[180px] sm:h-12 sm:max-w-[220px] object-contain">
       </a>
     </div>
-    <button @click="logout" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition" aria-label="Keluar">
+    <button @click="openLogoutConfirm" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition" aria-label="Keluar">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3-6 3 3m0 0-3 3m3-3H9"/>
       </svg>
@@ -32,7 +69,7 @@
   <main class="max-w-5xl mx-auto p-6 min-h-[calc(100vh-100px)] bg-emerald-50/70 rounded-2xl">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-xl font-semibold text-gray-800">Daftar Produk</h2>
-      <button @click="openModalTambah" class="bg-emerald-600 text-white text-sm px-4 py-2.5 rounded-full font-medium hover:bg-emerald-700 shadow-md shadow-emerald-200 transition">+ Tambah Produk</button>
+      <button @click="openModalTambah" class="bg-emerald-600 text-white text-sm px-4 py-2.5 rounded-full font-medium hover:bg-emerald-700 shadow-md shadow-emerald-200 transition">Tambah Produk</button>
     </div>
 
     <div class="bg-white rounded-2xl shadow-[0_10px_30px_rgba(16,185,129,0.08)] border border-emerald-100 overflow-hidden">
@@ -40,7 +77,7 @@
         <thead class="bg-gray-50 border-b text-gray-600">
           <tr>
             <th class="p-4">Nama Produk</th>
-            <th class="p-4">Tab Kategori</th>
+            <th class="p-4">Kategori</th>
             <th class="p-4">Jumlah Penjual</th>
             <th class="p-4 text-center">Aksi</th>
           </tr>
@@ -54,7 +91,11 @@
               </td>
               <td class="p-4" x-text="p.sellers.length"></td>
               <td class="p-4 text-center">
-                <button @click="openDeleteModal(p)" class="text-xs text-red-600 font-semibold hover:underline">Hapus</button>
+                <button @click="openDeleteModal(p)" class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition" aria-label="Hapus produk">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.49-3.75h-5.357M6.25 5.25h5.357m-5.357 0L7.5 18.75A2.25 2.25 0 0 0 9.75 21h4.5a2.25 2.25 0 0 0 2.25-2.25L17.25 5.25M9 5.25V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5v.75"/>
+                  </svg>
+                </button>
               </td>
             </tr>
           </template>
@@ -83,14 +124,34 @@
     </div>
   </div>
 
+  <div x-show="showLogoutConfirm" x-cloak class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div @click.away="closeLogoutConfirm" class="bg-white rounded-3xl max-w-md w-full p-6 border border-red-100/80 ring-1 ring-red-100 shadow-[0_24px_70px_rgba(239,68,68,0.18)]">
+      <div class="flex items-start gap-4">
+        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">!</div>
+        <div class="flex-1">
+          <h3 class="text-xl font-bold text-gray-900">Konfirmasi Keluar</h3>
+          <p class="mt-2 text-sm text-gray-600">
+            Apakah Anda yakin ingin keluar dari dashboard admin?
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" @click="closeLogoutConfirm" class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">Batal</button>
+        <button type="button" @click="logout" class="px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 shadow-md shadow-red-200 transition">Keluar</button>
+      </div>
+    </div>
+  </div>
+
   <div x-show="showAddProductModal" x-cloak class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div @click.away="closeModalTambah" class="bg-white rounded-3xl max-w-xl w-full p-6 border border-emerald-100/80 ring-1 ring-emerald-100 shadow-[0_24px_70px_rgba(16,185,129,0.18)]">
-      <div class="flex items-center justify-between mb-5">
+    <div @click.away="closeModalTambah" class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-hidden border border-emerald-100/80 ring-1 ring-emerald-100 shadow-[0_24px_70px_rgba(16,185,129,0.18)]">
+      <div class="flex items-center justify-between p-6 pb-4">
         <h3 class="text-xl font-bold text-gray-900">Tambah Produk</h3>
         <button @click="closeModalTambah" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
       </div>
 
-      <form @submit.prevent="submitProduct" class="space-y-4">
+      <div class="px-6 pb-6 max-h-[calc(90vh-5.5rem)] overflow-y-auto custom-scrollbar pr-2">
+        <form @submit.prevent="submitProduct" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Produk</label>
@@ -99,7 +160,7 @@
 
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Kategori</label>
-            <select x-model="formProduct.category_tab" class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" required>
+            <select x-model="formProduct.category_tab" class="w-full border border-emerald-200 rounded-xl bg-white/90 px-3 py-2.5 text-sm text-gray-700 shadow-sm transition-all duration-200 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/70 focus:border-emerald-300 appearance-none" required>
               <option value="khas">Khas</option>
               <option value="umum">Umum</option>
             </select>
@@ -137,11 +198,58 @@
           <textarea x-model="formProduct.description" rows="4" class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" required></textarea>
         </div>
 
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-semibold text-gray-600">Penjual</label>
+            <button type="button" @click="addSellerField" class="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 transition">
+              + Tambah Penjual
+            </button>
+          </div>
+
+          <template x-if="formProduct.sellers.length === 0">
+            <p class="text-xs text-gray-500">Belum ada penjual ditambahkan.</p>
+          </template>
+
+          <template x-for="(seller, index) in formProduct.sellers" :key="index">
+            <div class="mt-3 border border-emerald-100 rounded-xl p-3 bg-emerald-50/40 space-y-3">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-semibold text-emerald-700">Penjual <span x-text="index + 1"></span></p>
+                <button type="button" @click="removeSellerField(index)" class="text-[11px] font-semibold text-red-600 hover:text-red-700">Hapus</button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-600 mb-1">Nama Penjual</label>
+                  <input x-model="formProduct.sellers[index].name" type="text" class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" placeholder="Nama penjual" required>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-600 mb-1">Nomor WhatsApp</label>
+                  <input x-model="formProduct.sellers[index].phone" type="text" class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" placeholder="6281234567890" required>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-600 mb-1">Alamat</label>
+                  <input x-model="formProduct.sellers[index].address" type="text" class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" placeholder="Alamat penjual" required>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-semibold text-gray-600 mb-1">Link Google Maps</label>
+                  <input x-model="formProduct.sellers[index].maps_url" type="url" class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300" placeholder="https://maps.google.com/..." required>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
         <div class="flex justify-end gap-3 pt-2">
           <button type="button" @click="closeModalTambah" class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">Batal</button>
           <button type="submit" class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 shadow-md shadow-emerald-200 transition">Simpan Produk</button>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -150,6 +258,7 @@
       return {
         products: [],
         showAddProductModal: false,
+        showLogoutConfirm: false,
         deleteTarget: null,
         imageSource: 'url',
         selectedImageFile: null,
@@ -176,7 +285,25 @@
           const res = await fetch('/api/products');
           this.products = await res.json();
         },
+        addSellerField() {
+          this.formProduct.sellers.push({
+            name: '',
+            phone: '',
+            address: '',
+            maps_url: ''
+          });
+        },
+        removeSellerField(index) {
+          this.formProduct.sellers.splice(index, 1);
+        },
+        openLogoutConfirm() {
+          this.showLogoutConfirm = true;
+        },
+        closeLogoutConfirm() {
+          this.showLogoutConfirm = false;
+        },
         async logout() {
+          this.closeLogoutConfirm();
           await fetch('/api/auth/logout', { method: 'POST' });
           window.location.href = '/4dm1n';
         },
@@ -217,7 +344,14 @@
         async submitProduct() {
           const payload = {
             ...this.formProduct,
-            sellers: []
+            sellers: this.formProduct.sellers
+              .filter(seller => seller.name || seller.phone || seller.address || seller.maps_url)
+              .map(seller => ({
+                name: seller.name.trim(),
+                phone: seller.phone.trim(),
+                address: seller.address.trim(),
+                maps_url: seller.maps_url.trim()
+              }))
           };
 
           if (this.imageSource === 'upload') {

@@ -6,16 +6,21 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import multer from 'multer';
 
+// Inisialisasi aplikasi Express dan konfigurasi dasar server.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = 3000;
+
+// Menyimpan jumlah percobaan login per klien untuk membatasi brute force.
 const loginAttempts = new Map();
 
+// Mengambil identitas klien yang melakukan request untuk kebutuhan rate limiting login.
 const getClientKey = (req) => {
   const forwardedFor = req.headers['x-forwarded-for'];
   return (forwardedFor ? forwardedFor.split(',')[0].trim() : req.ip) || 'unknown';
 };
 
+// Konfigurasi upload file gambar ke folder img di project.
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const targetDir = path.join(__dirname, 'img');
@@ -30,8 +35,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Middleware umum untuk parsing request JSON.
 app.use(express.json());
 
+// Redirect request legacy ke halaman 404 agar URL tidak membuka file yang tidak valid.
 app.use((req, res, next) => {
   if (req.path === '/admin.html') {
     return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
@@ -40,6 +47,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// Menyediakan file statis dari folder public dan gambar dari folder img.
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 app.use(session({
@@ -49,17 +57,19 @@ app.use(session({
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Helper Baca & Tulis JSON
+// Helper untuk membaca dan menulis file JSON di folder data.
 const readData = async (file) => JSON.parse(await fs.readFile(path.join(__dirname, 'data', file), 'utf-8'));
 const writeData = async (file, data) => fs.writeFile(path.join(__dirname, 'data', file), JSON.stringify(data, null, 2));
 
-// Middleware Proteksi Halaman Admin
+// Middleware untuk memproteksi endpoint/admin yang hanya bisa diakses setelah login.
 const requireAuth = (req, res, next) => {
   if (!req.session.admin) return res.status(401).json({ error: 'Unauthorized' });
   next();
 };
 
-// --- ENDPOINT PUBLIK ---
+// ------------------------------
+// ENDPOINT PUBLIK / DATA PRODUK
+// ------------------------------
 app.get('/api/products', async (req, res) => {
   const products = await readData('products.json');
   res.json(products);
@@ -89,7 +99,9 @@ app.get('/4dm1n/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'admin-dashboard.html'));
 });
 
-// --- ENDPOINT AUTENTIKASI ---
+// ------------------------------
+// ENDPOINT AUTENTIKASI ADMIN
+// ------------------------------
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
   const clientKey = getClientKey(req);
@@ -127,7 +139,9 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
-// --- ENDPOINT CRUD ADMIN ---
+// ------------------------------
+// CRUD PRODUK (Hanya Admin)
+// ------------------------------
 app.post('/api/products', requireAuth, async (req, res) => {
   const products = await readData('products.json');
   const newProduct = { id: `prod_${Date.now()}`, ...req.body };
@@ -153,8 +167,10 @@ app.delete('/api/products/:id', requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+// Penanganan fallback 404 untuk route yang tidak terdefinisi.
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
+// Menjalankan server pada port yang telah ditentukan.
 app.listen(PORT, () => console.log(`Server aktif di http://localhost:${PORT}`));
