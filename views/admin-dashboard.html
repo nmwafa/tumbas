@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - UMKM Purworejo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-emerald-50 via-white to-lime-50 min-h-screen text-gray-800" x-data="adminDashboardApp()">
+  <nav class="bg-white/90 border-b border-emerald-100 px-6 py-4 flex justify-between items-center shadow-sm backdrop-blur-sm">
+    <h1 class="font-bold text-lg text-gray-800">Panel Manajemen Produk</h1>
+    <button @click="logout" class="text-sm text-red-600 font-semibold hover:underline">Keluar</button>
+  </nav>
+
+  <main class="max-w-5xl mx-auto p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-semibold text-gray-800">Daftar Produk</h2>
+      <button @click="openModalTambah" class="bg-emerald-600 text-white text-sm px-4 py-2.5 rounded-xl font-medium hover:bg-emerald-700 shadow-md shadow-emerald-200 transition">+ Tambah Produk</button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_10px_30px_rgba(16,185,129,0.08)] border border-emerald-100 overflow-hidden">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead class="bg-gray-50 border-b text-gray-600">
+          <tr>
+            <th class="p-4">Nama Produk</th>
+            <th class="p-4">Tab Kategori</th>
+            <th class="p-4">Jumlah Penjual</th>
+            <th class="p-4 text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="p in products" :key="p.id">
+            <tr class="border-b hover:bg-gray-50">
+              <td class="p-4 font-semibold" x-text="p.name"></td>
+              <td class="p-4">
+                <span :class="p.category_tab === 'khas' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'" class="px-2 py-0.5 rounded text-xs uppercase font-bold" x-text="p.category_tab"></span>
+              </td>
+              <td class="p-4" x-text="p.sellers.length"></td>
+              <td class="p-4 text-center">
+                <button @click="deleteProduct(p.id)" class="text-xs text-red-600 font-semibold hover:underline">Hapus</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    function adminDashboardApp() {
+      return {
+        products: [],
+        async init() {
+          const statusRes = await fetch('/api/auth/status');
+          const status = await statusRes.json();
+
+          if (!status.loggedIn) {
+            window.location.href = '/4dm1n';
+            return;
+          }
+
+          await this.loadProducts();
+        },
+        async loadProducts() {
+          const res = await fetch('/api/products');
+          this.products = await res.json();
+        },
+        async logout() {
+          await fetch('/api/auth/logout', { method: 'POST' });
+          window.location.href = '/4dm1n';
+        },
+        async deleteProduct(id) {
+          if (!confirm('Yakin ingin menghapus produk ini?')) return;
+          await fetch(`/api/products/${id}`, { method: 'DELETE' });
+          this.loadProducts();
+        },
+        openModalTambah() {
+          alert('Modal penambahan produk dapat diimplementasikan di sini untuk mengisi data JSON.');
+        }
+      }
+    }
+  </script>
+</body>
+</html>

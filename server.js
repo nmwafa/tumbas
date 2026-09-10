@@ -10,6 +10,15 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+
+app.use((req, res, next) => {
+  if (req.path === '/admin.html') {
+    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+  }
+
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 app.use(session({
@@ -33,6 +42,22 @@ const requireAuth = (req, res, next) => {
 app.get('/api/products', async (req, res) => {
   const products = await readData('products.json');
   res.json(products);
+});
+
+app.get('/4dm1n', (req, res) => {
+  if (req.session.admin) {
+    return res.redirect('/4dm1n/dashboard');
+  }
+
+  res.sendFile(path.join(__dirname, 'views', 'admin-login.html'));
+});
+
+app.get('/4dm1n/dashboard', (req, res) => {
+  if (!req.session.admin) {
+    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+  }
+
+  res.sendFile(path.join(__dirname, 'views', 'admin-dashboard.html'));
 });
 
 // --- ENDPOINT AUTENTIKASI ---
@@ -81,6 +106,10 @@ app.delete('/api/products/:id', requireAuth, async (req, res) => {
   products = products.filter(p => p.id !== req.params.id);
   await writeData('products.json', products);
   res.json({ success: true });
+});
+
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
 app.listen(PORT, () => console.log(`Server aktif di http://localhost:${PORT}`));
