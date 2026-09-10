@@ -9,6 +9,12 @@ import multer from 'multer';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = 3000;
+const loginAttempts = new Map();
+
+const getClientKey = (req) => {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  return (forwardedFor ? forwardedFor.split(',')[0].trim() : req.ip) || 'unknown';
+};
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -86,14 +92,30 @@ app.get('/4dm1n/dashboard', (req, res) => {
 // --- ENDPOINT AUTENTIKASI ---
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
+  const clientKey = getClientKey(req);
+  const failedAttempts = loginAttempts.get(clientKey) || 0;
+
+  if (failedAttempts >= 3) {
+    return res.status(429).json({ error: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' });
+  }
+
   const users = await readData('users.json');
   const user = users.find(u => u.username === username);
 
   if (user && await bcrypt.compare(password, user.password)) {
+    loginAttempts.delete(clientKey);
     req.session.admin = { id: user.id, name: user.name };
     return res.json({ success: true, name: user.name });
   }
-  res.status(401).json({ error: 'Username atau password salah' });
+
+  const nextFailedAttempts = failedAttempts + 1;
+  loginAttempts.set(clientKey, nextFailedAttempts);
+
+  if (nextFailedAttempts >= 3) {
+    return res.status(429).json({ error: 'Percobaan login salah melebihi batas. Silakan coba lagi nanti.' });
+  }
+
+  res.status(401).json({ error: `Username atau password salah (${nextFailedAttempts}/3)` });
 });
 
 app.get('/api/auth/status', (req, res) => {
