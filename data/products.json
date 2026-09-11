@@ -40,28 +40,6 @@
     ]
   },
   {
-    "id": "prod_2",
-    "name": "Geblek Khas Purworejo",
-    "category_tab": "khas",
-    "price_range": "Rp 10.000 - Rp 25.000",
-    "description": "Makanan ringan khas Purworejo berbahan dasar tepung singkong dengan tekstur kenyal dan gurih.",
-    "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=500",
-    "sellers": [
-      {
-        "name": "Oleh-Oleh Berkah",
-        "phone": "6281234567890",
-        "address": "Jl. Kyai Brengkel No. 15, Kutoarjo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      },
-      {
-        "name": "Bu Kartini Snack",
-        "phone": "6281234567890",
-        "address": "Jl. yang penting jalan",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      }
-    ]
-  },
-  {
     "id": "prod_3",
     "name": "Kripik Singkong Balado",
     "category_tab": "umum",

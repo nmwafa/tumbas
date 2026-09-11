@@ -56,15 +56,6 @@ const upload = multer({ storage });
 // Middleware umum untuk parsing request JSON.
 app.use(express.json());
 
-// Redirect request legacy ke halaman 404 agar URL tidak membuka file yang tidak valid.
-app.use((req, res, next) => {
-  if (req.path === '/admin.html') {
-    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
-  }
-
-  next();
-});
-
 // Menyediakan file statis dari folder public dan gambar dari folder img.
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
@@ -183,7 +174,28 @@ app.put('/api/products/:id', requireAuth, async (req, res) => {
 
 app.delete('/api/products/:id', requireAuth, async (req, res) => {
   let products = await readData('products.json');
-  products = products.filter(p => p.id !== req.params.id);
+  const productIndex = products.findIndex(p => p.id === req.params.id);
+
+  if (productIndex === -1) {
+    return res.status(404).json({ error: 'Produk tidak ditemukan' });
+  }
+
+  const product = products[productIndex];
+
+  if (product.image && product.image.startsWith('/img/')) {
+    const relativeImagePath = product.image.replace(/^\/+/, '');
+    const imagePath = path.join(__dirname, relativeImagePath);
+
+    try {
+      await fs.unlink(imagePath);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.error('Gagal menghapus file gambar produk:', error);
+      }
+    }
+  }
+
+  products.splice(productIndex, 1);
   await writeData('products.json', products);
   res.json({ success: true });
 });
