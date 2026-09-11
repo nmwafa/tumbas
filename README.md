@@ -1,10 +1,8 @@
 <div align="center">
-  <img src="img/logo.jfif" alt="Tumbas Logo" width="200">
+  <img src="img/logo.svg" alt="Tumbas Logo" width="200">
 </div>
 
 Platform e-commerce yang menampilkan produk-produk UMKM lokal Purworejo dengan fitur admin dashboard untuk manajemen produk.
-
-**Bahasa:** Indonesian
 
 ---
 
