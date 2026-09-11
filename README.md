@@ -2,7 +2,7 @@
 
 Platform e-commerce yang menampilkan produk-produk UMKM lokal Purworejo dengan fitur admin dashboard untuk manajemen produk.
 
-**Bahasa:** Indonesian | **Lisensi:** ISC
+**Bahasa:** Indonesian
 
 ---
 
@@ -22,7 +22,7 @@ Platform e-commerce yang menampilkan produk-produk UMKM lokal Purworejo dengan f
 
 ## 🎯 Tentang Proyek
 
-**Tumbas** adalah aplikasi web yang dirancang untuk menampilkan dan mengelola katalog produk UMKM Purworejo. Aplikasi ini memudahkan konsumen menemukan produk lokal berkualitas dan menghubungi penjual secara langsung melalui WhatsApp atau Google Maps.
+**Tumbas** adalah aplikasi web yang dirancang untuk menampilkan dan mengelola katalog produk UMKM Purworejo. Aplikasi ini memudahkan konsumen menemukan produk lokal berkualitas dan menghubungi penjual.
 
 Fitur admin memungkinkan pengelola untuk menambah, mengubah, dan menghapus produk beserta gambarnya dengan sistem login yang aman.
 
@@ -341,12 +341,6 @@ Kontribusi selalu diterima! Untuk berkontribusi:
 3. Commit perubahan (`git commit -m 'Add some AmazingFeature'`)
 4. Push ke branch (`git push origin feature/AmazingFeature`)
 5. Buka Pull Request
-
----
-
-## 📄 Lisensi
-
-Project ini dilisensikan di bawah ISC License - lihat file `package.json` untuk detailnya.
 
 ---
 
