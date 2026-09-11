@@ -6,7 +6,26 @@
     "price_range": "Rp 5000",
     "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Kue-Lompong-via-Jatengprov.jpg",
     "description": "Kue lontong dibuat dari bahan dasar batang daun talas yang dilumatkan. Dalam bahasa Jawa lompong berarti talas inilah yang menyebabkan kue ini disebut sebagai kue lompong.",
-    "sellers": []
+    "sellers": [
+      {
+        "name": "Bu Kartini",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Siti",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Rina",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      }
+    ]
   },
   {
     "id": "prod_1789107851273",
@@ -15,7 +34,14 @@
     "price_range": "Rp 10000",
     "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Rengginang-via-Budaya-Indonesia-e1695340492332.jpg",
     "description": "Rengginang sendiri terbuat dari beras ketan yang dimasak kemudian diberi bumbu khusus dan dikeringkan.",
-    "sellers": []
+    "sellers": [
+      {
+        "name": "Bu Kartini",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      }
+    ]
   },
   {
     "id": "prod_1789107925394",
