@@ -253,7 +253,7 @@ Data produk saat ini berada di `data/products.json` dan memiliki struktur sepert
 
 ### Membuat hash password baru untuk admin
 
-Jika Anda ingin mengganti password admin, Anda bisa membuat hash dengan perintah berikut:
+Jika Anda ingin mengganti password admin, Anda bisa membuat hash dengan perintah berikut (jalankan di dalam folder proyek):
 
 ```bash
 node -e "import bcrypt from 'bcryptjs'; const password='passwordbaru'; bcrypt.hash(password, 10).then((hash) => console.log(hash));"
