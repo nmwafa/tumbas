@@ -1,107 +1,62 @@
 [
   {
-    "id": "prod_1",
-    "name": "Geblek Khas Purworejo",
+    "id": "prod_1789107738368",
+    "name": "Kue Lompong",
     "category_tab": "khas",
-    "price_range": "Rp 10.000 - Rp 25.000",
-    "description": "Makanan ringan khas Purworejo berbahan dasar tepung singkong dengan tekstur kenyal dan gurih.",
-    "image": "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=500",
-    "sellers": [
-      {
-        "name": "Oleh-Oleh Berkah",
-        "phone": "6281234567890",
-        "address": "Jl. Kyai Brengkel No. 15, Kutoarjo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      },
-      {
-        "name": "Bu Kartini Snack",
-        "phone": "6281234567890",
-        "address": "Jl. yang penting jalan",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      },
-      {
-        "name": "Toko Oleh-Oleh Purworejo",
-        "phone": "6281234567890",
-        "address": "Jl. Pemuda No. 10, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      },
-      {
-        "name": "Snack Purworejo",
-        "phone": "6281234567890",
-        "address": "Jl. Diponegoro No. 5, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      },
-      {
-        "name": "Warung Oleh-Oleh Khas",
-        "phone": "6281234567890",
-        "address": "Jl. Ahmad Yani No. 20, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      }
-    ]
+    "price_range": "Rp 5000",
+    "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Kue-Lompong-via-Jatengprov.jpg",
+    "description": "Kue lontong dibuat dari bahan dasar batang daun talas yang dilumatkan. Dalam bahasa Jawa lompong berarti talas inilah yang menyebabkan kue ini disebut sebagai kue lompong.",
+    "sellers": []
   },
   {
-    "id": "prod_3",
-    "name": "Kripik Singkong Balado",
+    "id": "prod_1789107851273",
+    "name": "Rengginang",
+    "category_tab": "khas",
+    "price_range": "Rp 10000",
+    "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Rengginang-via-Budaya-Indonesia-e1695340492332.jpg",
+    "description": "Rengginang sendiri terbuat dari beras ketan yang dimasak kemudian diberi bumbu khusus dan dikeringkan.",
+    "sellers": []
+  },
+  {
+    "id": "prod_1789107925394",
+    "name": "Jenang Krasikan",
+    "category_tab": "khas",
+    "price_range": "Rp 100.000",
+    "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Jenang-Krasikan-via-Solopos.webp",
+    "description": "Dibuat dari bahan dasar beras ketan yang diberi gula merah dan santan. Jika dilihat dari tekstur dan warnanya jenang tampak tidak jauh berbeda dengan dodol.",
+    "sellers": []
+  },
+  {
+    "id": "prod_1789107985489",
+    "name": "Clorot",
+    "category_tab": "khas",
+    "price_range": "Rp 50.000",
+    "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Clorot-via-Tribunnews.jpg",
+    "description": "Jajanan pasar yang satu ini terbuat dari tepung beras serta gula merah lalu dibungkus dengan janur dan membentuk gulungan seperti terompet.",
+    "sellers": []
+  },
+  {
+    "id": "prod_1789108525868",
+    "name": "Kupat Tahu",
     "category_tab": "umum",
     "price_range": "Rp 15.000",
-    "description": "Camilan keripik singkong renyah dengan balutan bumbu balado pedas manis buatan UMKM lokal.",
-    "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500",
-    "sellers": [
-      {
-        "name": "Snack Sejahtera",
-        "phone": "6289876543210",
-        "address": "Jl. Brigjen Katamso No. 4, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      },
-      {
-        "name": "Toko Oleh-Oleh Nusantara",
-        "phone": "6289876543210",
-        "address": "Jl. Pemuda No. 10, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      }
-    ]
+    "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Kupat-Tahu.webp",
+    "description": "Sesuai dengan namanya kupat tahu berisikan ketupat atau lontong yang diberi irisan tahu, tauge, kol daun bawang lalu diberi bumbu kacang manis.",
+    "sellers": []
   },
   {
-    "id": "prod_4",
-    "name": "Keripik Tempe Pedas Manis",
+    "id": "prod_1789108725652",
+    "name": "Lanting",
     "category_tab": "umum",
-    "price_range": "Rp 12.000 - Rp 20.000",
-    "description": "Camilan keripik tempe renyah dengan balutan bumbu pedas manis buatan UMKM lokal.",
-    "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500",
+    "price_range": "Rp 50.000",
+    "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Lanting-Purworejo-via-Shopee.jpg",
+    "description": "Terbuat dari Pati singkong yang diberi bumbu khusus kemudian dibentuk bulat-bulat atau angka 8. Terakhir adonan ranting digoreng hingga garing dengan rasa gurih nan renyah.",
     "sellers": [
       {
-        "name": "Snack Sejahtera",
-        "phone": "6289876543210",
-        "address": "Jl. Brigjen Katamso No. 4, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      },
-      {
-        "name": "Toko Oleh-Oleh Nusantara",
-        "phone": "6289876543210",
-        "address": "Jl. Pemuda No. 10, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      }
-    ]
-  },
-  {
-    "id": "prod_5",
-    "name": "Keripik Singkong Pedas Manis",
-    "category_tab": "umum",
-    "price_range": "Rp 12.000 - Rp 20.000",
-    "description": "Camilan keripik singkong renyah dengan balutan bumbu pedas manis buatan UMKM lokal.",
-    "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500",
-    "sellers": [
-      {
-        "name": "Snack Sejahtera",
-        "phone": "6289876543210",
-        "address": "Jl. Brigjen Katamso No. 4, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
-      },
-      {
-        "name": "Toko Oleh-Oleh Nusantara",
-        "phone": "6289876543210",
-        "address": "Jl. Pemuda No. 10, Purworejo",
-        "maps_url": "https://maps.google.com/?q=Purworejo"
+        "name": "Bu Kartini",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
       }
     ]
   }
