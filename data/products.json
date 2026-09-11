@@ -24,6 +24,12 @@
         "phone": "628888888888",
         "address": "Jl. Kenangan",
         "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Rini",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
       }
     ]
   },
@@ -59,7 +65,32 @@
     "price_range": "Rp 50.000",
     "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Clorot-via-Tribunnews.jpg",
     "description": "Jajanan pasar yang satu ini terbuat dari tepung beras serta gula merah lalu dibungkus dengan janur dan membentuk gulungan seperti terompet.",
-    "sellers": []
+    "sellers": [
+      {
+        "name": "Bu Kartini",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Siti",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Rina",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Rini",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      }
+    ]
   },
   {
     "id": "prod_1789108525868",
