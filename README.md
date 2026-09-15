@@ -4,7 +4,9 @@
 
 # Apa ini?
 
-Tumbas adalah aplikasi katalog produk UMKM Purworejo berbasis web yang memungkinkan calon pembeli melihat daftar produk lokal, mencari produk berdasarkan kategori, dan langsung terhubung dengan pen[...]
+Tumbas adalah aplikasi katalog produk UMKM Purworejo berbasis web yang memungkinkan calon pembeli melihat daftar produk lokal, mencari produk berdasarkan kategori, dan langsung terhubung dengan penjual melalui WhatsApp maupun Google Maps. Di sisi admin, aplikasi ini menyediakan dashboard untuk mengelola katalog produk, menambahkan penjual, dan mengupload gambar produk.
+
+> Link demo: https://tumbas-coral.vercel.app/
 
 ---
 
@@ -618,4 +620,4 @@ Kontribusi sangat terbuka. Jika Anda ingin membantu meningkatkan Tumbas, Anda da
 
 ---
 
-Made with ❤️ for UMKM Purworejo
+> Author: Nur Muhammad Wafa - maswafa.is-a.dev
