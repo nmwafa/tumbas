@@ -116,5 +116,39 @@
         "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
       }
     ]
+  },
+  {
+    "id": "prod_1789108823456",
+    "name": "Tahu Aci",
+    "category_tab": "umum",
+    "price_range": "Rp 10.000",
+    "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Tahu-Aci-via-Instagram.jpg",
+    "description": "Tahu aci adalah salah satu jajanan khas Purworejo yang terbuat dari tahu yang diisi dengan adonan tepung tapioka atau aci.",
+    "sellers": [
+      {
+        "name": "Bu Kartini",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Siti",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Rina",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      },
+      {
+        "name": "Bu Rini",
+        "phone": "628888888888",
+        "address": "Jl. Kenangan",
+        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
+      }
+    ]
   }
 ]
