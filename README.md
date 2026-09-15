@@ -4,7 +4,7 @@
 
 # Apa ini?
 
-Tumbas adalah aplikasi katalog produk UMKM Purworejo berbasis web yang memungkinkan calon pembeli melihat daftar produk lokal, mencari produk berdasarkan kategori, dan langsung terhubung dengan penjual melalui WhatsApp maupun Google Maps. Di sisi admin, aplikasi ini menyediakan dashboard untuk mengelola katalog produk, menambahkan penjual, dan mengupload gambar produk.
+Tumbas adalah aplikasi katalog produk UMKM Purworejo berbasis web yang memungkinkan calon pembeli melihat daftar produk lokal, mencari produk berdasarkan kategori, dan langsung terhubung dengan pen[...]
 
 ---
 
@@ -253,10 +253,10 @@ Data produk saat ini berada di `data/products.json` dan memiliki struktur sepert
 
 ### Membuat hash password baru untuk admin
 
-Jika Anda ingin mengganti password admin, Anda bisa membuat hash dengan perintah berikut (jalankan di dalam folder proyek):
+Jika Anda ingin mengganti password admin, Anda bisa membuat hash dengan perintah berikut:
 
 ```bash
-node -e "import bcrypt from 'bcryptjs'; const password='passwordbaru'; bcrypt.hash(password, 10).then((hash) => console.log(hash));"
+node --input-type=module hash.js
 ```
 
 Lalu salin hasil hash ke field `password` pada `data/users.json`.
