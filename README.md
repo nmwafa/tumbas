@@ -71,10 +71,10 @@ Saat ini aplikasi sudah dapat:
 ### Fitur Keamanan yang Sudah Tersedia
 
 - Password admin disimpan dalam bentuk hash menggunakan `bcryptjs`
-- Rate limiting login untuk mencegah brute force
+- Rate limiting login: maksimal 3 kegagalan per client key dalam 2 menit
 - Session cookie berbasis `express-session`
 - Middleware `requireAuth` untuk melindungi endpoint admin
-- Upload file gambar dibatasi ke tipe gambar saja
+- Upload produk hanya dapat dilakukan oleh admin dan ukuran file dibatasi maksimal 10 MB
 
 ---
 
@@ -86,10 +86,15 @@ tumbas/
 │   ├── products.json
 │   └── users.json
 ├── img/
+├── lib/
+│   └── data-store.js
 ├── public/
 │   ├── 404.html
 │   ├── index.html
 │   └── favicon.svg
+├── routes/
+│   ├── admin.js
+│   └── public.js
 ├── views/
 │   ├── admin-dashboard.html
 │   └── admin-login.html
@@ -107,6 +112,9 @@ Keterangan singkat:
 - `data/products.json` berisi data katalog produk
 - `data/users.json` berisi data user admin
 - `img/` digunakan untuk menyimpan upload gambar produk
+- `routes/public.js` berisi endpoint katalog yang dapat diakses publik
+- `routes/admin.js` berisi halaman, autentikasi, upload, dan CRUD admin
+- `lib/data-store.js` menyediakan helper baca/tulis JSON untuk router
 
 ---
 
@@ -131,14 +139,15 @@ Keterangan singkat:
 
 ### Arsitektur Server
 
-Server utama `server.js` menggunakan Express.js dengan struktur sebagai berikut:
+Server menggunakan Express.js dengan pembagian tugas sebagai berikut:
 
-- `express.static()` untuk menyajikan file publik dari `public/`
-- `express.static('/img')` untuk menyajikan file gambar dari `img/`
-- `express-session` untuk session-based authentication
-- `multer` untuk upload file gambar
-- helper `readData()` dan `writeData()` untuk operasi JSON file-based
-- middleware `requireAuth` untuk proteksi endpoint admin
+- `server.js` mengatur middleware, file statis, sesi, dan pemasangan router
+- `routes/public.js` menangani katalog produk publik
+- `routes/admin.js` menangani halaman dan endpoint admin; upload dan CRUD produk dilindungi `requireAuth`
+- `lib/data-store.js` menangani operasi baca/tulis JSON file-based
+- `express.static()` menyajikan file dari `public/` dan gambar dari `img/`
+- Endpoint login, status sesi, dan logout dapat dipanggil tanpa sesi aktif
+- `multer` menangani upload dengan batas ukuran 10 MB
 
 ---
 
@@ -214,7 +223,7 @@ Data produk saat ini berada di `data/products.json` dan memiliki struktur sepert
 
 ### Prasyarat
 
-- Node.js 16+
+- Node.js 18+ (diperlukan oleh Express 5)
 - npm
 - Git
 
@@ -366,30 +375,11 @@ Contoh response:
 ]
 ```
 
-#### 2. Upload Gambar Produk
+### Endpoint Autentikasi dan Admin
 
-```http
-POST /api/products/upload
-Content-Type: multipart/form-data
-```
+Login, status sesi, dan logout dapat dipanggil tanpa sesi admin. Upload dan CRUD produk memerlukan sesi admin aktif.
 
-Body form-data:
-
-```text
-image = <file-gambar>
-```
-
-Response:
-
-```json
-{
-  "image": "/img/1720000000000-kue-lompong.jpg"
-}
-```
-
-### Endpoint Admin
-
-#### 3. Login Admin
+#### 2. Login Admin
 
 ```http
 POST /api/auth/login
@@ -414,7 +404,7 @@ Response sukses:
 }
 ```
 
-#### 4. Cek Status Login
+#### 3. Cek Status Login
 
 ```http
 GET /api/auth/status
@@ -432,7 +422,7 @@ Response:
 }
 ```
 
-#### 5. Logout
+#### 4. Logout
 
 ```http
 POST /api/auth/logout
@@ -445,6 +435,29 @@ Response:
   "success": true
 }
 ```
+
+#### 5. Upload Gambar Produk
+
+```http
+POST /api/products/upload
+Content-Type: multipart/form-data
+```
+
+Kirim file pada field `image`; ukuran maksimal 10 MB.
+
+```text
+image = <file-gambar>
+```
+
+Respons sukses:
+
+```json
+{
+  "image": "/img/1720000000000-kue-lompong.jpg"
+}
+```
+
+Respons error yang mungkin diterima: `401` jika belum login, `400` jika file tidak dikirim, dan `413` jika ukuran melebihi batas. Server saat ini belum memvalidasi tipe atau isi file.
 
 #### 6. Tambah Produk
 
@@ -524,7 +537,7 @@ Response:
 ### Contoh curl untuk login
 
 ```bash
-curl -X POST http://localhost:3000/api/auth/login \
+curl -c cookies.txt -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"passwordmu"}'
 ```
@@ -538,7 +551,7 @@ curl http://localhost:3000/api/products
 ### Contoh curl untuk upload gambar
 
 ```bash
-curl -X POST http://localhost:3000/api/products/upload \
+curl -b cookies.txt -X POST http://localhost:3000/api/products/upload \
   -F "image=@/path/to/gambar.jpg"
 ```
 
@@ -547,7 +560,7 @@ curl -X POST http://localhost:3000/api/products/upload \
 ```bash
 curl -X POST http://localhost:3000/api/products \
   -H "Content-Type: application/json" \
-  -H "Cookie: connect.sid=SESSION_ID" \
+  -b cookies.txt \
   -d '{
     "name": "Produk Baru",
     "category_tab": "umum",
@@ -572,16 +585,17 @@ curl -X POST http://localhost:3000/api/products \
 ### Fitur yang sudah diterapkan
 
 1. Password hash menggunakan `bcryptjs`
-2. Login rate limiting berdasarkan client key (IP / forwarded IP)
+2. Login rate limiting maksimal 3 kegagalan per client key dalam 2 menit; counter disimpan di memori proses
 3. Session admin menggunakan `express-session`
 4. Proteksi endpoint admin lewat middleware `requireAuth`
-5. Nama file upload di-sanitasi dengan timestamp agar aman
-6. Upload hanya menerima file gambar
+5. Upload produk memerlukan sesi admin dan dibatasi maksimal 10 MB
+6. Nama file upload diberi awalan timestamp dan spasi diganti tanda hubung; server belum memvalidasi tipe atau isi file
 
 ### Catatan untuk production
 
 - Gunakan `HTTPS` di lingkungan production
 - Simpan secret session di environment variable, bukan hardcode seperti saat ini
+- Pastikan `X-Forwarded-For` hanya dipercaya dari reverse proxy tepercaya karena dipakai sebagai client key rate limit
 - Hindari menyimpan data sensitif di file JSON bila aplikasi berkembang lebih besar
 
 ---
@@ -591,11 +605,12 @@ curl -X POST http://localhost:3000/api/products \
 Beberapa detail penting yang perlu diperhatikan dari implementasi saat ini:
 
 - `server.js` menggunakan `type: module`, jadi sintaks JavaScript menggunakan ES Modules
+- Router publik dan admin dipisahkan ke `routes/public.js` dan `routes/admin.js`
 - Session secret saat ini dibuat langsung di kode (`super-secret-key-101`)
 - Database bersifat file-based, sehingga semua data produk dan user disimpan di JSON
 - Endpoint `DELETE /api/products/:id` juga akan mencoba menghapus file gambar terkait jika file ada di folder `img/`
 - Halaman admin menyediakan dua metode input gambar: URL dan upload file
-- Saat menambah produk, seller yang kosong otomatis akan di-saring pada server payload
+- Dashboard menyaring seller yang seluruh field-nya kosong sebelum mengirim payload produk
 
 ---
 
