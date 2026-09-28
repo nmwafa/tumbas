@@ -414,11 +414,7 @@ Response:
 
 ```json
 {
-  "loggedIn": true,
-  "user": {
-    "id": "usr_01",
-    "name": "Administrator"
-  }
+  "loggedIn": true
 }
 ```
 
