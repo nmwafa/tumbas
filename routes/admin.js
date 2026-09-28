@@ -111,7 +111,7 @@ adminRouter.post('/api/auth/login', async (req, res) => {
 });
 
 adminRouter.get('/api/auth/status', (req, res) => {
-  res.json({ loggedIn: !!req.session.admin, user: req.session.admin || null });
+  res.json({ loggedIn: !!req.session.admin || null });
 });
 
 adminRouter.post('/api/auth/logout', (req, res) => {
