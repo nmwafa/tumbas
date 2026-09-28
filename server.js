@@ -1,62 +1,17 @@
 import express from 'express';
 import session from 'express-session';
-import bcrypt from 'bcryptjs';
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import multer from 'multer';
+import publicRouter from './routes/public.js';
+import adminRouter from './routes/admin.js';
 
 // Inisialisasi aplikasi Express dan konfigurasi dasar server.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = 3000;
 
-// Menyimpan jumlah percobaan login per klien untuk membatasi brute force.
-const loginAttempts = new Map();
-const MAX_LOGIN_ATTEMPTS = 3;
-const LOGIN_ATTEMPT_RESET_MS = 2 * 60 * 1000;
-
-// Mengambil identitas klien yang melakukan request untuk kebutuhan rate limiting login.
-const getClientKey = (req) => {
-  const forwardedFor = req.headers['x-forwarded-for'];
-  return (forwardedFor ? forwardedFor.split(',')[0].trim() : req.ip) || 'unknown';
-};
-
-// Mengambil jumlah percobaan login yang belum kedaluwarsa untuk klien tertentu.
-const getFailedAttempts = (clientKey) => {
-  const attempts = loginAttempts.get(clientKey);
-
-  if (!attempts) {
-    return 0;
-  }
-
-  if (Date.now() > attempts.expiresAt) {
-    loginAttempts.delete(clientKey);
-    return 0;
-  }
-
-  return attempts.count;
-};
-
-// Konfigurasi upload file gambar ke folder img di project.
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const targetDir = path.join(__dirname, 'img');
-    await fs.mkdir(targetDir, { recursive: true });
-    cb(null, targetDir);
-  },
-  filename: (req, file, cb) => {
-    const safeName = Date.now() + '-' + file.originalname.replace(/\s+/g, '-');
-    cb(null, safeName);
-  }
-});
-
-const upload = multer({ storage });
-
-// Middleware umum untuk parsing request JSON.
+// Parse API payloads, serve public assets, and initialize browser sessions.
 app.use(express.json());
-
-// Menyediakan file statis dari folder public dan gambar dari folder img.
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 app.use(session({
@@ -66,141 +21,10 @@ app.use(session({
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Helper untuk membaca dan menulis file JSON di folder data.
-const readData = async (file) => JSON.parse(await fs.readFile(path.join(__dirname, 'data', file), 'utf-8'));
-const writeData = async (file, data) => fs.writeFile(path.join(__dirname, 'data', file), JSON.stringify(data, null, 2));
+app.use(publicRouter);
+app.use(adminRouter);
 
-// Middleware untuk memproteksi endpoint/admin yang hanya bisa diakses setelah login.
-const requireAuth = (req, res, next) => {
-  if (!req.session.admin) return res.status(401).json({ error: 'Unauthorized' });
-  next();
-};
-
-// ------------------------------
-// ENDPOINT PUBLIK / DATA PRODUK
-// ------------------------------
-app.get('/api/products', async (req, res) => {
-  const products = await readData('products.json');
-  res.json(products);
-});
-
-app.post('/api/products/upload', upload.single('image'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'File gambar tidak ditemukan' });
-  }
-
-  res.json({ image: `/img/${req.file.filename}` });
-});
-
-app.get('/4dm1n', (req, res) => {
-  if (req.session.admin) {
-    return res.redirect('/4dm1n/dashboard');
-  }
-
-  res.sendFile(path.join(__dirname, 'views', 'admin-login.html'));
-});
-
-app.get('/4dm1n/dashboard', (req, res) => {
-  if (!req.session.admin) {
-    return res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
-  }
-
-  res.sendFile(path.join(__dirname, 'views', 'admin-dashboard.html'));
-});
-
-// ------------------------------
-// ENDPOINT AUTENTIKASI ADMIN
-// ------------------------------
-app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  const clientKey = getClientKey(req);
-  const failedAttempts = getFailedAttempts(clientKey);
-
-  if (failedAttempts >= MAX_LOGIN_ATTEMPTS) {
-    return res.status(429).json({ error: 'Terlalu banyak percobaan login. Silakan coba lagi nanti.' });
-  }
-
-  const users = await readData('users.json');
-  const user = users.find(u => u.username === username);
-
-  if (user && await bcrypt.compare(password, user.password)) {
-    loginAttempts.delete(clientKey);
-    req.session.admin = { id: user.id, name: user.name };
-    return res.json({ success: true, name: user.name });
-  }
-
-  const nextFailedAttempts = failedAttempts + 1;
-  loginAttempts.set(clientKey, {
-    count: nextFailedAttempts,
-    expiresAt: Date.now() + LOGIN_ATTEMPT_RESET_MS
-  });
-
-  if (nextFailedAttempts >= MAX_LOGIN_ATTEMPTS) {
-    return res.status(429).json({ error: 'Percobaan login salah melebihi batas. Silakan coba lagi nanti.' });
-  }
-
-  res.status(401).json({ error: 'Username atau password salah!' });
-});
-
-app.get('/api/auth/status', (req, res) => {
-  res.json({ loggedIn: !!req.session.admin, user: req.session.admin || null });
-});
-
-app.post('/api/auth/logout', (req, res) => {
-  req.session.destroy();
-  res.json({ success: true });
-});
-
-// ------------------------------
-// CRUD PRODUK (Hanya Admin)
-// ------------------------------
-app.post('/api/products', requireAuth, async (req, res) => {
-  const products = await readData('products.json');
-  const newProduct = { id: `prod_${Date.now()}`, ...req.body };
-  products.push(newProduct);
-  await writeData('products.json', products);
-  res.status(201).json(newProduct);
-});
-
-app.put('/api/products/:id', requireAuth, async (req, res) => {
-  let products = await readData('products.json');
-  const index = products.findIndex(p => p.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Produk tidak ditemukan' });
-
-  products[index] = { ...products[index], ...req.body };
-  await writeData('products.json', products);
-  res.json(products[index]);
-});
-
-app.delete('/api/products/:id', requireAuth, async (req, res) => {
-  let products = await readData('products.json');
-  const productIndex = products.findIndex(p => p.id === req.params.id);
-
-  if (productIndex === -1) {
-    return res.status(404).json({ error: 'Produk tidak ditemukan' });
-  }
-
-  const product = products[productIndex];
-
-  if (product.image && product.image.startsWith('/img/')) {
-    const relativeImagePath = product.image.replace(/^\/+/, '');
-    const imagePath = path.join(__dirname, relativeImagePath);
-
-    try {
-      await fs.unlink(imagePath);
-    } catch (error) {
-      if (error.code !== 'ENOENT') {
-        console.error('Gagal menghapus file gambar produk:', error);
-      }
-    }
-  }
-
-  products.splice(productIndex, 1);
-  await writeData('products.json', products);
-  res.json({ success: true });
-});
-
-// Penanganan fallback 404 untuk route yang tidak terdefinisi.
+// Tampilkan halaman 404 untuk permintaan yang tidak cocok.
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
