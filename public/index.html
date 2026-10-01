@@ -121,6 +121,7 @@
   <div x-show="selectedProduct" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-cloak>
     <div @click.away="selectedProduct = null" class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-hidden border border-emerald-100/80 ring-1 ring-emerald-100 shadow-[0_24px_70px_rgba(16,185,129,0.18)]">
       <div class="p-6 max-h-[calc(90vh-3rem)] overflow-y-auto custom-scrollbar">
+        <img :src="selectedProduct?.image" :alt="selectedProduct?.name" class="mb-4 h-44 w-full rounded-xl object-cover sm:h-56">
         <div class="flex justify-between items-start gap-4">
           <h2 class="text-xl font-bold text-gray-900" x-text="selectedProduct?.name"></h2>
           <button @click="selectedProduct = null" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
@@ -128,27 +129,27 @@
         <p class="text-sm text-gray-600 mt-2 leading-relaxed" x-text="selectedProduct?.description"></p>
 
         <div class="mt-6 border-t border-emerald-100 pt-4">
-          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Daftar Penjual</h4>
+          <h4 class="text-sm font-bold text-gray-800 mb-3">Penjual produk</h4>
           <div class="space-y-3">
             <template x-if="selectedProduct?.sellers?.length">
               <template x-for="seller in selectedProduct?.sellers" :key="seller.name">
-                <div class="p-3 border border-emerald-100 rounded-2xl bg-emerald-50/60 flex flex-col gap-2">
-                  <div>
-                    <p class="font-semibold text-sm text-gray-900" x-text="seller.name"></p>
-                    <p class="text-xs text-gray-500 mt-1" x-text="seller.address"></p>
+                <div class="p-4 border border-emerald-100 rounded-xl bg-emerald-50/50 flex flex-col gap-3">
+                  <div class="min-w-0">
+                    <p class="font-bold text-sm text-gray-900" x-text="seller.name"></p>
+                    <p class="text-xs text-gray-600 mt-1 leading-relaxed" x-text="seller.address"></p>
                   </div>
-                  <div class="flex gap-2 mt-1">
+                  <div class="grid grid-cols-2 gap-2">
                     <a :href="'https://wa.me/' + seller.phone + '?text=' + encodeURIComponent('Halo, saya melihat produk ' + selectedProduct.name + ' di Katalog UMKM Purworejo.')" 
-                       target="_blank" class="flex-1 bg-emerald-600 text-white text-xs text-center py-2.5 px-3 rounded-xl font-medium hover:bg-emerald-700 transition shadow-sm shadow-emerald-100">WhatsApp</a>
-                    <a :href="seller.maps_url" target="_blank" 
-                       class="bg-yellow-500 text-white text-xs text-center py-2.5 px-3 rounded-xl font-medium hover:bg-yellow-600 transition shadow-sm shadow-yellow-200">Google Maps</a>
+                       target="_blank" rel="noopener noreferrer" class="inline-flex min-h-10 items-center justify-center bg-emerald-600 text-white text-xs text-center px-3 rounded-lg font-semibold hover:bg-emerald-700 transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">WhatsApp</a>
+                    <a :href="seller.maps_url" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex min-h-10 items-center justify-center border border-emerald-200 bg-white text-emerald-700 text-xs text-center px-3 rounded-lg font-semibold hover:bg-emerald-100/70 transition focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">Lihat lokasi</a>
                   </div>
                 </div>
               </template>
             </template>
 
             <template x-if="selectedProduct && (!selectedProduct?.sellers || selectedProduct?.sellers.length === 0)">
-              <p class="text-sm text-gray-500 italic">Tidak ada penjual untuk produk ini.</p>
+              <p class="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 px-4 py-5 text-center text-sm text-gray-600">Belum ada penjual untuk produk ini.</p>
             </template>
           </div>
         </div>
