@@ -49,6 +49,15 @@
       height: 0;
       width: 0;
     }
+
+    .hide-scrollbar {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col bg-emerald-50 text-gray-800" x-data="katalogApp()">
@@ -119,9 +128,10 @@
 
   <!-- Modal Detail & Seller Contacts -->
   <div x-show="selectedProduct" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-cloak>
-    <div @click.away="selectedProduct = null" class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-hidden border border-emerald-100/80 ring-1 ring-emerald-100 shadow-[0_24px_70px_rgba(16,185,129,0.18)]">
-      <div class="p-6 max-h-[calc(90vh-3rem)] overflow-y-auto custom-scrollbar">
-        <img :src="selectedProduct?.image" :alt="selectedProduct?.name" class="mb-4 h-44 w-full rounded-xl object-cover sm:h-56">
+    <div @click.away="selectedProduct = null" class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-[0_24px_70px_rgba(16,185,129,0.18)]">
+      <div class="max-h-[90vh] overflow-y-auto hide-scrollbar">
+        <img :src="selectedProduct?.image" :alt="selectedProduct?.name" class="block aspect-[16/9] w-full object-cover">
+        <div class="p-6">
         <div class="flex justify-between items-start gap-4">
           <h2 class="text-xl font-bold text-gray-900" x-text="selectedProduct?.name"></h2>
           <button @click="selectedProduct = null" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
@@ -152,6 +162,7 @@
               <p class="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 px-4 py-5 text-center text-sm text-gray-600">Belum ada penjual untuk produk ini.</p>
             </template>
           </div>
+        </div>
         </div>
       </div>
     </div>
