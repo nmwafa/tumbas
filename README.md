@@ -2,644 +2,214 @@
   <img src="img/logo.png" alt="Tumbas Logo" width="300">
 </div>
 
-# Apa ini?
+# Tumbas - Katalog Produk UMKM Purworejo
 
-Tumbas adalah aplikasi katalog produk UMKM Purworejo berbasis web yang memungkinkan calon pembeli melihat daftar produk lokal, mencari produk berdasarkan kategori, dan langsung terhubung dengan penjual melalui WhatsApp maupun Google Maps. Di sisi admin, aplikasi ini menyediakan dashboard untuk mengelola katalog produk, menambahkan penjual, dan mengupload gambar produk.
+Aplikasi web untuk mempromosikan produk UMKM Purworejo. Pembeli dapat melihat katalog, mencari produk, dan menghubungi penjual melalui WhatsApp atau Google Maps.
 
-> Link demo: https://tumbas-coral.vercel.app/
-
----
+> **Demo:** https://tumbas-coral.vercel.app/
 
 ## Daftar Isi
 
-- [Tentang Proyek](#tentang-proyek)
 - [Fitur Utama](#fitur-utama)
+- [Teknologi](#teknologi)
+- [Instalasi](#instalasi)
+- [API](#api)
 - [Struktur Proyek](#struktur-proyek)
-- [Arsitektur dan Flow Aplikasi](#arsitektur-dan-flow-aplikasi)
-- [Data yang Digunakan Saat Ini](#data-yang-digunakan-saat-ini)
-- [Teknologi yang Digunakan](#teknologi-yang-digunakan)
-- [Instalasi dan Menjalankan Aplikasi](#instalasi-dan-menjalankan-aplikasi)
-- [Panduan Penggunaan](#panduan-penggunaan)
-- [API Endpoints](#api-endpoints)
-- [Contoh Payload dan Request](#contoh-payload-dan-request)
-- [Keamanan](#keamanan)
-- [Catatan Implementasi Saat Ini](#catatan-implementasi-saat-ini)
-- [Kontribusi](#kontribusi)
-
----
-
-## Tentang Proyek
-
-Tumbas dibangun untuk mendukung promosi produk UMKM Purworejo secara digital. Aplikasi ini memiliki dua sisi utama:
-
-1. Sisi publik untuk menampilkan katalog produk secara menarik dan responsif.
-2. Sisi admin untuk mengelola daftar produk dan penjual secara cepat.
-
-Saat ini aplikasi sudah dapat:
-
-- menampilkan produk dengan kategori `khas` dan `umum`
-- menampilkan pencarian produk secara real-time di sisi client
-- membuka modal detail produk dengan daftar penjual
-- menghubungkan pembeli ke WhatsApp dan Google Maps tiap penjual
-- melakukan login admin dengan sesi berbasis Express Session
-- melakukan CRUD produk melalui dashboard admin
-- mengupload gambar produk ke folder `img/` secara lokal atau ke Vercel Blob saat Blob dikonfigurasi
-
----
+- [Deployment](#deployment)
 
 ## Fitur Utama
 
-### Fitur Publik
+### Publik
+- 🔍 Pencarian produk real-time
+- 📂 Filter produk (Khas/Umum)
+- 📱 Tampilan responsif (desktop, tablet, mobile)
+- 💬 Integrasi WhatsApp dan Google Maps per penjual
 
-- Pencarian produk berdasarkan nama menggunakan input di header
-- Pembagian tab produk menjadi `Produk Khas` dan `Produk Umum`
-- Tampilan katalog responsif untuk desktop, tablet, dan mobile
-- Modal detail produk yang berisi deskripsi serta daftar penjual
-- Integrasi tombol WhatsApp dan Google Maps per penjual
-- Tampilan modern dengan Tailwind CSS dan Alpine.js
+### Admin
+- 🔐 Login dengan password terenkripsi (bcryptjs)
+- ➕ CRUD produk dan penjual
+- 📸 Upload gambar (URL atau file)
+- ⚡ Rate limiting login (3x gagal = cooldown 2 menit)
 
-### Fitur Admin
+## Teknologi
 
-- Login admin melalui halaman `/4dm1n`
-- Dashboard produk untuk melihat daftar produk yang sudah ada
-- Tambah produk baru dari form yang lengkap
-- Pilihan sumber gambar dari URL atau upload file
-- Tambah dan hapus penjual di dalam satu produk
-- Hapus produk dengan konfirmasi terlebih dahulu
-- Logout melalui modal konfirmasi
+| Bagian | Stack |
+|--------|-------|
+| **Backend** | Node.js, Express 5.2.1, express-session |
+| **Frontend** | HTML5, Tailwind CSS, Alpine.js |
+| **Storage** | JSON file lokal atau Vercel Blob |
+| **Upload** | Multer (10 MB lokal / 4 MB Blob) |
 
-### Fitur Keamanan yang Sudah Tersedia
-
-- Password admin disimpan dalam bentuk hash menggunakan `bcryptjs`
-- Rate limiting login: maksimal 3 kegagalan per client key dalam 2 menit
-- Session cookie berbasis `express-session`
-- Middleware `requireAuth` untuk melindungi endpoint admin
-- Upload produk hanya dapat dilakukan oleh admin dengan batas ukuran sesuai storage aktif
-
-### Penyimpanan lokal dan Vercel Blob
-
-- Tanpa `BLOB_READ_WRITE_TOKEN`, aplikasi lokal membaca/menulis JSON di `data/` dan menyimpan gambar upload di `img/products/`.
-- Jika `BLOB_READ_WRITE_TOKEN` tersedia, data JSON disimpan di Blob dengan prefix `data/` dan gambar di prefix `products/`.
-- Saat object JSON belum ada di Blob, aplikasi membaca file JSON bawaan di `data/` sebagai seed awal; perubahan berikutnya ditulis ke Blob.
-- Pada deployment Vercel, token Blob harus dikonfigurasi. Aplikasi tidak akan diam-diam memakai filesystem lokal yang tidak persisten.
-- Buat Blob Store pada project Vercel dan tambahkan `BLOB_READ_WRITE_TOKEN` ke Environment Variables.
-- Untuk memakai Blob saat development lokal, atur token tersebut di environment lokal. Tanpanya, aplikasi memakai penyimpanan lokal.
-- Form tambah produk mengirim gambar dan data produk bersama-sama. Jika penyimpanan produk gagal, gambar yang baru diunggah dibersihkan.
-- Upload Blob melalui server dibatasi 4 MB agar berada di bawah batas ukuran request Vercel; upload lokal dibatasi 10 MB.
-
----
-
-## Struktur Proyek
-
-```bash
-tumbas/
-├── data/
-│   ├── products.json
-│   └── users.json
-├── img/
-├── lib/
-│   ├── data-store.js
-│   └── storage.js
-├── public/
-│   ├── 404.html
-│   ├── index.html
-│   └── favicon.svg
-├── routes/
-│   ├── admin.js
-│   └── public.js
-├── views/
-│   ├── admin-dashboard.html
-│   └── admin-login.html
-├── package.json
-├── package-lock.json
-├── server.js
-└── README.md
-```
-
-Keterangan singkat:
-
-- `public/index.html` berisi halaman katalog publik
-- `views/admin-login.html` berisi halaman login admin
-- `views/admin-dashboard.html` berisi dashboard admin CRUD
-- `data/products.json` berisi data katalog produk
-- `data/users.json` berisi data user admin
-- `img/` digunakan untuk menyimpan upload gambar produk
-- `routes/public.js` berisi endpoint katalog yang dapat diakses publik
-- `routes/admin.js` berisi halaman, autentikasi, upload, dan CRUD admin
-- `lib/data-store.js` menyediakan helper baca/tulis JSON lokal atau Vercel Blob
-
----
-
-## Arsitektur dan Flow Aplikasi
-
-### Alur Publik
-
-1. Client membuka halaman utama `/`
-2. Browser memanggil `GET /api/products`
-3. Server membaca file `data/products.json`
-4. Produk ditampilkan di UI publik dan dapat difilter berdasarkan tab dan search
-5. Saat user mengeklik produk, modal detail muncul dan menampilkan seller data
-
-### Alur Admin
-
-1. Admin membuka `/4dm1n`
-2. Jika belum login, server menampilkan form login
-3. Setelah login berhasil, server menyimpan session admin
-4. Admin diarahkan ke `/4dm1n/dashboard`
-5. Dashboard memanggil `GET /api/auth/status` untuk mengecek sesi login
-6. Admin dapat menambah, menghapus, dan melihat daftar produk
-
-### Arsitektur Server
-
-Server menggunakan Express.js dengan pembagian tugas sebagai berikut:
-
-- `server.js` mengatur middleware, file statis, sesi, dan pemasangan router
-- `routes/public.js` menangani katalog produk publik
-- `routes/admin.js` menangani halaman dan endpoint admin; upload dan CRUD produk dilindungi `requireAuth`
-- `lib/data-store.js` menangani operasi baca/tulis JSON lokal atau Vercel Blob
-- `express.static()` menyajikan file dari `public/` dan gambar lokal dari `img/`; Blob menyajikan gambar dari URL publiknya
-- Endpoint login, status sesi, dan logout dapat dipanggil tanpa sesi aktif
-- `multer` menangani upload maksimal 10 MB lokal atau 4 MB di Vercel Blob
-
----
-
-## Data yang Digunakan Saat Ini
-
-### Contoh data produk
-
-Data produk saat ini berada di `data/products.json` dan memiliki struktur seperti berikut:
-
-```json
-[
-  {
-    "id": "prod_1789107738368",
-    "name": "Kue Lompong",
-    "category_tab": "khas",
-    "price_range": "Rp 5000",
-    "image": "https://tempatwisataseru.com/wp-content/uploads/2023/09/Kue-Lompong-via-Jatengprov.jpg",
-    "description": "Kue lontong dibuat dari bahan dasar batang daun talas ...",
-    "sellers": [
-      {
-        "name": "Bu Kartini",
-        "phone": "628888888888",
-        "address": "Jl. Kenangan",
-        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
-      }
-    ]
-  }
-]
-```
-
-### Contoh data user admin
-
-```json
-[
-  {
-    "id": "usr_01",
-    "username": "admin",
-    "password": "$2b$10$87T9zddxGseygQH0FZBs4uYKMptSIPjpOUJpVuEGImC29wBAUGari",
-    "name": "Administrator"
-  }
-]
-```
-
-> File `users.json` saat ini sudah berisi user **admin** dengan password default **admin1234**. Untuk membuat password baru, gunakan `bcryptjs` seperti pada contoh di bawah.
-
----
-
-## Teknologi yang Digunakan
-
-### Backend
-
-- Node.js
-- Express.js 5.2.1
-- express-session
-- bcryptjs
-- multer
-
-### Frontend
-
-- HTML5
-- Tailwind CSS
-- Alpine.js
-- Google Fonts (`Nunito`)
-
-### Storage
-
-- JSON file-based storage (`data/products.json`, `data/users.json`)
-- Folder `img/` untuk menyimpan file gambar hasil upload
-
----
-
-## Instalasi dan Menjalankan Aplikasi
+## Instalasi
 
 ### Prasyarat
-
-- Node.js 18+ (diperlukan oleh Express 5)
+- Node.js 18+
 - npm
-- Git
 
-### Langkah instalasi
-
-1. Clone repository:
-
-   ```bash
-   git clone https://github.com/nmwafa/tumbas.git
-   cd tumbas
-   ```
-
-2. Install dependency:
-
-   ```bash
-   npm install
-   ```
-
-3. Jalankan aplikasi:
-
-   Mode development:
-
-   ```bash
-   npm run dev
-   ```
-
-   Mode production:
-
-   ```bash
-   npm start
-   ```
-
-4. Akses aplikasi:
-
-- Katalog publik: `http://localhost:3000/`
-- Login admin: `http://localhost:3000/4dm1n`
-- Dashboard admin setelah login: `http://localhost:3000/4dm1n/dashboard`
-
-### Membuat hash password baru untuk admin
-
-Jika Anda ingin mengganti password admin, Anda bisa membuat hash dengan perintah berikut (jalankan di dalam folder proyek):
-
-1) Menggunakan perintah Node (CommonJS):
-
+### Setup
 ```bash
-node -e "const bcrypt = require('bcryptjs'); const password = 'passwordbaru'; bcrypt.hash(password, 10, (err, hash) => { if (err) throw err; console.log(hash); });"
+# Clone dan install
+git clone https://github.com/nmwafa/tumbas.git
+cd tumbas
+npm install
+
+# Development
+npm run dev
+
+# Production
+npm start
 ```
 
-2) Menggunakan Node sebagai module (top-level await):
+Akses:
+- Katalog: `http://localhost:3000/`
+- Admin: `http://localhost:3000/4dm1n`
+
+### Mengubah Password Admin
 
 ```bash
+# Generate hash baru
 node --input-type=module -e "import bcrypt from 'bcryptjs'; const password='passwordbaru'; console.log(await bcrypt.hash(password, 10));"
 ```
 
-3) Atau buat file singkat (hash.js) dengan isi:
-```js
-import bcrypt from 'bcryptjs';
-const password = 'passwordbaru';
-bcrypt.hash(password, 10).then(hash => console.log(hash));
-```
+Ganti password di `data/users.json`.
 
-Jalankan:
-```bash
-node --input-type=module hash.js
-```
+## API
 
-Lalu salin hasil hash ke field `password` pada `data/users.json`.
-
----
-
-## Panduan Penggunaan
-
-### Untuk Pembeli / Pengunjung
-
-1. Buka halaman utama `http://localhost:3000/`
-2. Gunakan tab `Produk Khas` atau `Produk Umum`
-3. Gunakan kolom pencarian untuk mencari produk tertentu
-4. Klik kartu produk untuk melihat detail
-5. Hubungi penjual melalui tombol WhatsApp atau buka lokasi via Google Maps
-
-### Untuk Admin
-
-1. Buka `http://localhost:3000/4dm1n`
-2. Login dengan username dan password admin
-3. Di dashboard, Anda dapat:
-   - menambah produk baru
-   - memilih kategori produk
-   - memasukkan rentang harga
-   - menambahkan penjual dan kontaknya
-   - memilih foto produk dari URL atau upload file
-   - menghapus produk yang sudah tidak berlaku
-
-### Flow menambah produk baru
-
-Dalam dashboard admin, form tambah produk mencakup field: `name`, `category_tab`, `price_range`, `image`, `description`, dan `sellers`.
-
-Untuk produk yang disimpan, struktur data yang dikirim dari dashboard ke server biasanya seperti:
-
-```json
-{
-  "name": "Kupat Tahu",
-  "category_tab": "umum",
-  "price_range": "Rp 15.000",
-  "image": "https://example.com/kupat-tahu.jpg",
-  "description": "Kupat tahu dengan bumbu kacang dan kuah manis.",
-  "sellers": [
-    {
-      "name": "Toko Pak Joko",
-      "phone": "6281234567890",
-      "address": "Jl. Merdeka No. 12, Purworejo",
-      "maps_url": "https://maps.google.com/?q=Jl.+Merdeka+No.+12+Purworejo"
-    }
-  ]
-}
-```
-
----
-
-## API Endpoints
-
-### Endpoint Publik
-
-#### 1. Ambil Semua Produk
-
+### Publik
 ```http
-GET /api/products
+GET /api/products                 # Daftar semua produk
 ```
 
-Contoh response:
-
-```json
-[
-  {
-    "id": "prod_1789107738368",
-    "name": "Kue Lompong",
-    "category_tab": "khas",
-    "price_range": "Rp 5000",
-    "image": "https://tempatwisataseru.com/....jpg",
-    "description": "Kue lontong dibuat dari bahan dasar batang daun talas ...",
-    "sellers": [
-      {
-        "name": "Bu Kartini",
-        "phone": "628888888888",
-        "address": "Jl. Kenangan",
-        "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
-      }
-    ]
-  }
-]
-```
-
-### Endpoint Autentikasi dan Admin
-
-Login, status sesi, dan logout dapat dipanggil tanpa sesi admin. Upload dan CRUD produk memerlukan sesi admin aktif.
-
-#### 2. Login Admin
-
+### Admin (memerlukan login)
 ```http
-POST /api/auth/login
-Content-Type: application/json
+POST   /api/auth/login             # Login
+GET    /api/auth/status            # Cek status login
+POST   /api/auth/logout            # Logout
+POST   /api/products               # Buat produk (JSON atau multipart)
+POST   /api/products/upload        # Upload gambar
+PUT    /api/products/:id           # Edit produk
+DELETE /api/products/:id           # Hapus produk
 ```
 
-Request body:
+### Contoh: Tambah Produk
 
-```json
-{
-  "username": "admin",
-  "password": "passwordmu"
-}
-```
-
-Response sukses:
-
-```json
-{
-  "success": true,
-  "name": "Administrator"
-}
-```
-
-#### 3. Cek Status Login
-
-```http
-GET /api/auth/status
-```
-
-Response:
-
-```json
-{
-  "loggedIn": true
-}
-```
-
-#### 4. Logout
-
-```http
-POST /api/auth/logout
-```
-
-Response:
-
-```json
-{
-  "success": true
-}
-```
-
-#### 5. Upload Gambar Produk
-
-```http
-POST /api/products/upload
-Content-Type: multipart/form-data
-```
-
-Kirim file pada field `image`; ukuran maksimal 10 MB secara lokal atau 4 MB untuk Blob di Vercel.
-
-```text
-image = <file-gambar>
-```
-
-Respons sukses berisi path lokal (`/img/products/...`) atau URL publik Vercel Blob, sesuai mode storage:
-
-```json
-{
-  "image": "/img/products/8c6d6da0-kue-lompong.jpg"
-}
-```
-
-Endpoint ini dipertahankan untuk klien lama. Form dashboard memakai endpoint tambah produk agar gambar dan data produk disimpan dalam satu alur. Tipe file yang diterima JPEG, PNG, WebP, GIF, dan AVIF.
-
-#### 6. Tambah Produk
-
-```http
-POST /api/products
-```
-
-Untuk gambar dari URL, kirim `application/json` dengan field `image`. Untuk upload file, kirim `multipart/form-data` dengan field `product` berisi JSON data produk (tanpa `image`) dan field `image` berisi file. Kedua mode memerlukan session admin aktif.
-
-```json
-{
-  "name": "Produk Baru",
-  "price_range": "Rp 25.000",
-  "description": "Deskripsi produk baru",
-  "category_tab": "khas",
-  "image": "https://example.com/produk-baru.jpg",
-  "sellers": [
-    {
-      "name": "Toko A",
-      "address": "Jl. Raya No. 1",
-      "phone": "6281234567890",
-      "maps_url": "https://maps.google.com/?q=Jl.+Raya+No.+1"
-    }
-  ]
-}
-```
-
-Response:
-
-```json
-{
-  "id": "prod_1720000000000",
-  "name": "Produk Baru",
-  "price_range": "Rp 25.000",
-  "description": "Deskripsi produk baru",
-  "category_tab": "khas",
-  "image": "https://example.com/produk-baru.jpg",
-  "sellers": [
-    {
-      "name": "Toko A",
-      "address": "Jl. Raya No. 1",
-      "phone": "6281234567890",
-      "maps_url": "https://maps.google.com/?q=Jl.+Raya+No.+1"
-    }
-  ]
-}
-```
-
-#### 7. Edit Produk
-
-```http
-PUT /api/products/:id
-Content-Type: application/json
-```
-
-Request mirip dengan endpoint tambah produk, hanya perlu mengirim field yang ingin diubah.
-
-#### 8. Hapus Produk
-
-```http
-DELETE /api/products/:id
-```
-
-Response:
-
-```json
-{
-  "success": true
-}
-```
-
----
-
-## Contoh Payload dan Request
-
-### Contoh curl untuk login
-
-```bash
-curl -c cookies.txt -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"passwordmu"}'
-```
-
-### Contoh curl untuk mengambil semua produk
-
-```bash
-curl http://localhost:3000/api/products
-```
-
-### Contoh curl untuk upload gambar
-
-```bash
-curl -b cookies.txt -X POST http://localhost:3000/api/products/upload \
-  -F "image=@/path/to/gambar.jpg"
-```
-
-### Contoh curl untuk menambahkan produk
-
+**JSON (gambar dari URL):**
 ```bash
 curl -X POST http://localhost:3000/api/products \
   -H "Content-Type: application/json" \
   -b cookies.txt \
   -d '{
-    "name": "Produk Baru",
-    "category_tab": "umum",
-    "price_range": "Rp 20.000",
-    "image": "/img/produk-baru.jpg",
-    "description": "Deskripsi produk baru",
-    "sellers": [
-      {
-        "name": "Toko Baru",
-        "phone": "628123456780",
-        "address": "Jl. Baru No. 4",
-        "maps_url": "https://maps.google.com/?q=Jl.+Baru+No.+4"
-      }
-    ]
+    "name": "Kue Lompong",
+    "category_tab": "khas",
+    "price_range": "Rp 5.000",
+    "image": "https://example.com/kue.jpg",
+    "description": "Kue tradisional Purworejo",
+    "sellers": [{
+      "name": "Bu Kartini",
+      "phone": "628888888888",
+      "address": "Jl. Kenangan",
+      "maps_url": "https://maps.app.goo.gl/..."
+    }]
   }'
 ```
 
----
+**Multipart (upload file):**
+```bash
+curl -X POST http://localhost:3000/api/products \
+  -b cookies.txt \
+  -F 'product=@product.json' \
+  -F 'image=@foto.jpg'
+```
+
+## Struktur Proyek
+
+```
+tumbas/
+├── data/
+│   ├── products.json         # Data produk
+│   └── users.json            # Admin user
+├── img/products/             # Upload gambar lokal
+├── public/
+│   ├── index.html            # Katalog publik
+│   └── 404.html
+├── views/
+│   ├── admin-login.html      # Login form
+│   └── admin-dashboard.html  # Dashboard admin
+├── routes/
+│   ├── public.js             # Endpoint publik
+│   └── admin.js              # Endpoint & halaman admin
+├── lib/
+│   ├── data-store.js         # Baca/tulis JSON atau Blob
+│   └── storage.js            # Upload helper
+├── server.js                 # Entry point
+└── package.json
+```
+
+## Deployment
+
+### Vercel
+
+1. **Setup Blob Store:**
+   - Di Vercel dashboard → Storage → Create → Blob
+   - Copy token ke environment variable `BLOB_READ_WRITE_TOKEN`
+
+2. **Deploy:**
+   ```bash
+   npm install -g vercel
+   vercel
+   ```
+
+**Catatan:** Tanpa token Blob, aplikasi menggunakan filesystem lokal (tidak persisten di Vercel). Dengan token, data JSON dan gambar disimpan di Blob.
 
 ## Keamanan
 
-### Fitur yang sudah diterapkan
+✅ **Implementasi saat ini:**
+- Password hash dengan bcryptjs
+- Session cookie (24 jam)
+- Rate limiting login
+- Middleware `requireAuth` untuk endpoint admin
+- Validasi tipe file upload (JPEG, PNG, WebP, GIF, AVIF)
 
-1. Password hash menggunakan `bcryptjs`
-2. Login rate limiting maksimal 3 kegagalan per client key dalam 2 menit; counter disimpan di memori proses
-3. Session admin menggunakan `express-session`
-4. Proteksi endpoint admin lewat middleware `requireAuth`
-5. Upload produk memerlukan sesi admin; tipe gambar dibatasi ke JPEG, PNG, WebP, GIF, dan AVIF
-6. Ukuran upload dibatasi 10 MB secara lokal dan 4 MB saat memakai Blob di Vercel
+⚠️ **Untuk production:**
+- Gunakan HTTPS
+- Simpan session secret di environment variable
+- Gunakan database untuk data produk (jangan JSON)
+- Pastikan reverse proxy terpercaya untuk `X-Forwarded-For`
 
-### Catatan untuk production
+## Data Struktur
 
-- Gunakan `HTTPS` di lingkungan production
-- Simpan secret session di environment variable, bukan hardcode seperti saat ini
-- Pastikan `X-Forwarded-For` hanya dipercaya dari reverse proxy tepercaya karena dipakai sebagai client key rate limit
-- Hindari menyimpan data sensitif di file JSON bila aplikasi berkembang lebih besar
+**Produk:**
+```json
+{
+  "id": "prod_1789107738368",
+  "name": "Kue Lompong",
+  "category_tab": "khas",
+  "price_range": "Rp 5.000",
+  "image": "https://...",
+  "description": "...",
+  "sellers": [
+    {
+      "name": "Bu Kartini",
+      "phone": "628888888888",
+      "address": "Jl. Kenangan",
+      "maps_url": "https://maps.app.goo.gl/..."
+    }
+  ]
+}
+```
 
----
+**Admin User:**
+```json
+{
+  "id": "usr_01",
+  "username": "admin",
+  "password": "$2b$10$...",
+  "name": "Administrator"
+}
+```
 
-## Catatan Implementasi Saat Ini
-
-Beberapa detail penting yang perlu diperhatikan dari implementasi saat ini:
-
-- `server.js` menggunakan `type: module`, jadi sintaks JavaScript menggunakan ES Modules
-- Router publik dan admin dipisahkan ke `routes/public.js` dan `routes/admin.js`
-- Session secret saat ini dibuat langsung di kode (`super-secret-key-101`)
-- Penyimpanan lokal memakai JSON di `data/`; dengan Blob token, data JSON disimpan di Vercel Blob
-- Endpoint `DELETE /api/products/:id` menghapus gambar yang dikelola aplikasi dari `img/` atau Vercel Blob; URL gambar eksternal tidak dihapus
-- Halaman admin menyediakan dua metode input gambar: URL dan upload file
-- Dashboard menyaring seller yang seluruh field-nya kosong sebelum mengirim payload produk
-
----
-
-## Kontribusi
-
-Kontribusi sangat terbuka. Jika Anda ingin membantu meningkatkan Tumbas, Anda dapat:
-
-1. fork repository
-2. buat branch baru
-3. lakukan perubahan
-4. commit dan push
-5. buka pull request
-
----
-
-## Informasi Tambahan
-
-- Nama project: `tumbas`
-- Port default: `3000`
-- Main entry file: `server.js`
-- README ini diperbarui berdasarkan struktur proyek dan implementasi terkini yang ada di workspace saat ini.
+Default: `admin` / `admin1234`
 
 ---
 
-> Author: Nur Muhammad Wafa - maswafa.is-a.dev
+📧 **Author:** Nur Muhammad Wafa - maswafa.is-a.dev
