@@ -35,5 +35,19 @@ app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
+app.use((error, req, res, next) => {
+  console.error("Request gagal:", error);
+  if (res.headersSent) return next(error);
+
+  const status = Number.isInteger(error.status) ? error.status : 500;
+  const message =
+    error.expose || status < 500 ? error.message : "Terjadi kesalahan server.";
+
+  if (req.path.startsWith("/api/")) {
+    return res.status(status).json({ error: message });
+  }
+  res.status(status).send(message);
+});
+
 // Menjalankan server pada port yang telah ditentukan.
 app.listen(PORT, () => console.log(`Server aktif di http://localhost:${PORT}`));

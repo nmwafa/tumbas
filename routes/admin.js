@@ -2,9 +2,12 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import multer from "multer";
+import { del, put } from "@vercel/blob";
 import { readData, writeData } from "../lib/data-store.js";
+import { getStorageMode } from "../lib/storage.js";
 
 // Rute admin untuk login, dashboard, dan manajemen produk.
 const adminRouter = Router();
@@ -49,39 +52,171 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-// Menyimpan file gambar yang diunggah ke direktori 'img' dan membatasi ukuran file hingga 10 MB.
-const imageStorage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const imageDirectory = path.join(projectRoot, "img");
-    await fs.mkdir(imageDirectory, { recursive: true });
-    cb(null, imageDirectory);
-  },
-  filename: (req, file, cb) => {
-    const safeName = `${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`;
-    cb(null, safeName);
-  },
-});
+const IMAGE_TYPES = new Map([
+  ["image/jpeg", ".jpg"],
+  ["image/png", ".png"],
+  ["image/webp", ".webp"],
+  ["image/gif", ".gif"],
+  ["image/avif", ".avif"],
+]);
 
-// Konfigurasi multer untuk menangani unggahan gambar produk dengan batas ukuran file 10 MB.
-const upload = multer({
-  storage: imageStorage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-});
-
-// Middleware untuk menangani unggahan gambar produk dan mengelola kesalahan terkait ukuran file.
 const uploadProductImage = (req, res, next) => {
-  upload.single("image")(req, res, (error) => {
-    if (
-      error instanceof multer.MulterError &&
-      error.code === "LIMIT_FILE_SIZE"
-    ) {
-      return res.status(413).json({ error: "Ukuran foto maksimal 10 MB" });
-    }
+  let storageMode;
+  try {
+    storageMode = getStorageMode();
+  } catch (error) {
+    return next(error);
+  }
 
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      // Vercel server uploads have a 4.5 MB request-body ceiling.
+      fileSize: storageMode === "blob" ? 4 * 1024 * 1024 : 10 * 1024 * 1024,
+    },
+    fileFilter: (request, file, callback) => {
+      if (!IMAGE_TYPES.has(file.mimetype)) {
+        const error = new Error("Gunakan file JPEG, PNG, WebP, GIF, atau AVIF.");
+        error.code = "UNSUPPORTED_IMAGE_TYPE";
+        return callback(error);
+      }
+      callback(null, true);
+    },
+  });
+
+  upload.single("image")(req, res, (error) => {
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      const maxSize = storageMode === "blob" ? "4 MB" : "10 MB";
+      return res.status(413).json({ error: `Ukuran gambar maksimal ${maxSize}` });
+    }
+    if (error?.code === "UNSUPPORTED_IMAGE_TYPE") {
+      return res.status(415).json({ error: error.message });
+    }
     if (error) return next(error);
     next();
   });
 };
+
+async function saveProductImage(file) {
+  const extension = IMAGE_TYPES.get(file.mimetype);
+  const pathname = `products/${randomUUID()}${extension}`;
+
+  if (getStorageMode() === "blob") {
+    const blob = await put(pathname, file.buffer, {
+      access: "public",
+      contentType: file.mimetype,
+      addRandomSuffix: false,
+    });
+    return { image: blob.url, pathname: blob.pathname };
+  }
+
+  const localPath = path.join(projectRoot, "img", pathname);
+  await fs.mkdir(path.dirname(localPath), { recursive: true });
+  await fs.writeFile(localPath, file.buffer, { flag: "wx" });
+  return { image: `/img/${pathname}`, localPath };
+}
+
+async function deleteProductImage(product) {
+  if (typeof product?.image !== "string") return;
+
+  let imageUrl;
+  try {
+    imageUrl = new URL(product.image, "http://localhost");
+  } catch {
+    return;
+  }
+
+  if (imageUrl.origin !== "http://localhost") {
+    const hostname = imageUrl.hostname.toLowerCase();
+    const isVercelBlob =
+      hostname.endsWith(".blob.vercel-storage.com") ||
+      hostname === "blob.vercel-storage.com";
+    if (!isVercelBlob || !imageUrl.pathname.startsWith("/products/")) return;
+
+    if (getStorageMode() !== "blob") {
+      throw new Error("BLOB_READ_WRITE_TOKEN diperlukan untuk menghapus gambar Blob.");
+    }
+    await del(product.image);
+    return;
+  }
+
+  if (!imageUrl.pathname.startsWith("/img/")) return;
+
+  const imageRelativePath = imageUrl.pathname.slice("/img/".length);
+  const isCurrentUpload = imageRelativePath.startsWith("products/");
+  const isLegacyUpload = /^\d+-[^/]+$/.test(imageRelativePath);
+  if (!isCurrentUpload && !isLegacyUpload) return;
+  if (process.env.VERCEL === "1") return;
+
+  const imageDirectory = path.resolve(projectRoot, "img");
+  const imagePath = path.resolve(imageDirectory, imageRelativePath);
+  const relativePath = path.relative(imageDirectory, imagePath);
+  if (
+    !relativePath ||
+    relativePath.startsWith("..") ||
+    path.isAbsolute(relativePath)
+  ) {
+    return;
+  }
+
+  try {
+    await fs.unlink(imagePath);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+
+function getNewProduct(payload, image) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw badRequest("Data produk tidak valid.");
+  }
+
+  const { name, category_tab, price_range, description, sellers } = payload;
+  if (
+    typeof name !== "string" ||
+    !name.trim() ||
+    !["khas", "umum"].includes(category_tab) ||
+    typeof price_range !== "string" ||
+    !price_range.trim() ||
+    typeof description !== "string" ||
+    !description.trim() ||
+    !Array.isArray(sellers)
+  ) {
+    throw badRequest("Data produk belum lengkap atau tidak valid.");
+  }
+
+  if (typeof image !== "string" || !image.trim()) {
+    throw badRequest("Gambar produk wajib diisi.");
+  }
+  if (!isAllowedProductImage(image)) {
+    throw badRequest("Gambar harus menggunakan URL HTTP(S) atau path gambar lokal.");
+  }
+
+  return {
+    id: `prod_${randomUUID()}`,
+    name: name.trim(),
+    category_tab,
+    price_range: price_range.trim(),
+    image,
+    description: description.trim(),
+    sellers,
+  };
+}
+
+function badRequest(message) {
+  const error = new Error(message);
+  error.status = 400;
+  return error;
+}
+
+function isAllowedProductImage(image) {
+  if (image.startsWith("/img/")) return true;
+  try {
+    return ["http:", "https:"].includes(new URL(image).protocol);
+  } catch {
+    return false;
+  }
+}
 
 // Halaman login dan dashboard admin; status login dan logout dikelola melalui sesi.
 adminRouter.get("/4dm1n", (req, res) => {
@@ -146,24 +281,74 @@ adminRouter.post("/api/auth/logout", (req, res) => {
   res.json({ success: true });
 });
 
-// Upload gambar produk
-adminRouter.post("/api/products/upload", requireAuth, uploadProductImage, (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "File gambar tidak ditemukan" });
+// Endpoint upload tetap tersedia untuk integrasi yang mengunggah gambar terpisah.
+adminRouter.post(
+  "/api/products/upload",
+  requireAuth,
+  uploadProductImage,
+  async (req, res, next) => {
+    let savedImage;
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "File gambar tidak ditemukan" });
+      }
+      savedImage = await saveProductImage(req.file);
+      res.json({ image: savedImage.image, pathname: savedImage.pathname });
+    } catch (error) {
+      if (savedImage) {
+        try {
+          await deleteProductImage({ image: savedImage.image });
+        } catch (cleanupError) {
+          console.error("Gagal membersihkan gambar upload:", cleanupError);
+        }
+      }
+      next(error);
     }
-
-    res.json({ image: `/img/${req.file.filename}` });
   },
 );
 
 // Tambah Produk
-adminRouter.post("/api/products", requireAuth, async (req, res) => {
-  const products = await readData("products.json");
-  const newProduct = { id: `prod_${Date.now()}`, ...req.body };
-  products.push(newProduct);
-  await writeData("products.json", products);
-  res.status(201).json(newProduct);
-});
+adminRouter.post(
+  "/api/products",
+  requireAuth,
+  uploadProductImage,
+  async (req, res, next) => {
+    let savedImage;
+    let productStored = false;
+    try {
+      const payload = req.is("multipart/form-data")
+        ? JSON.parse(req.body.product || "{}")
+        : req.body;
+      const products = await readData("products.json");
+
+      if (req.file) savedImage = await saveProductImage(req.file);
+      const newProduct = getNewProduct(
+        payload,
+        savedImage?.image || payload?.image,
+      );
+      products.push(newProduct);
+      await writeData("products.json", products);
+      productStored = true;
+
+      res.status(201).json(newProduct);
+    } catch (error) {
+      if (savedImage && !productStored) {
+        try {
+          await deleteProductImage({ image: savedImage.image });
+        } catch (cleanupError) {
+          console.error("Gagal membersihkan gambar upload:", cleanupError);
+        }
+      }
+      if (error instanceof SyntaxError) {
+        return res.status(400).json({ error: "Data produk tidak valid." });
+      }
+      if (error.status === 400) {
+        return res.status(400).json({ error: error.message });
+      }
+      next(error);
+    }
+  },
+);
 
 // Update Produk
 adminRouter.put("/api/products/:id", requireAuth, async (req, res) => {
@@ -190,33 +375,18 @@ adminRouter.delete("/api/products/:id", requireAuth, async (req, res) => {
     }
 
     const product = products[productIndex];
-
-    // Hapus file hanya jika gambar adalah upload lokal (bukan URL eksternal)
-    if (product.image && typeof product.image === "string") {
-      const isExternal = /^https?:\/\//i.test(product.image);
-      const isDataUrl = product.image.startsWith("data:");
-
-      if (!isExternal && !isDataUrl && product.image.startsWith("/img/")) {
-        const relativeImagePath = product.image.replace(/^\/+/, "");
-        const resolved = path.resolve(projectRoot, relativeImagePath);
-        const imgDir = path.resolve(projectRoot, "img");
-
-        if (!resolved.startsWith(imgDir + path.sep)) {
-          console.warn("Path gambar tidak valid, dilewati:", product.image);
-        } else {
-          try {
-            await fs.unlink(resolved);
-          } catch (error) {
-            if (error.code !== "ENOENT") {
-              console.error("Gagal menghapus file gambar produk:", error);
-            }
-          }
-        }
-      }
-    }
-
     products.splice(productIndex, 1);
     await writeData("products.json", products);
+
+    try {
+      await deleteProductImage(product);
+    } catch (error) {
+      console.error("Produk terhapus, tetapi gambar gagal dihapus:", error);
+      return res.status(500).json({
+        error: "Produk terhapus, tetapi gambar gagal dihapus. Hapus file secara manual atau periksa konfigurasi Blob.",
+        deletedId: product.id,
+      });
+    }
 
     res.json({ success: true, deletedId: product.id });
   } catch (error) {

@@ -43,7 +43,7 @@ Saat ini aplikasi sudah dapat:
 - menghubungkan pembeli ke WhatsApp dan Google Maps tiap penjual
 - melakukan login admin dengan sesi berbasis Express Session
 - melakukan CRUD produk melalui dashboard admin
-- mengupload gambar produk ke folder `img/`
+- mengupload gambar produk ke folder `img/` secara lokal atau ke Vercel Blob saat Blob dikonfigurasi
 
 ---
 
@@ -74,7 +74,18 @@ Saat ini aplikasi sudah dapat:
 - Rate limiting login: maksimal 3 kegagalan per client key dalam 2 menit
 - Session cookie berbasis `express-session`
 - Middleware `requireAuth` untuk melindungi endpoint admin
-- Upload produk hanya dapat dilakukan oleh admin dan ukuran file dibatasi maksimal 10 MB
+- Upload produk hanya dapat dilakukan oleh admin dengan batas ukuran sesuai storage aktif
+
+### Penyimpanan lokal dan Vercel Blob
+
+- Tanpa `BLOB_READ_WRITE_TOKEN`, aplikasi lokal membaca/menulis JSON di `data/` dan menyimpan gambar upload di `img/products/`.
+- Jika `BLOB_READ_WRITE_TOKEN` tersedia, data JSON disimpan di Blob dengan prefix `data/` dan gambar di prefix `products/`.
+- Saat object JSON belum ada di Blob, aplikasi membaca file JSON bawaan di `data/` sebagai seed awal; perubahan berikutnya ditulis ke Blob.
+- Pada deployment Vercel, token Blob harus dikonfigurasi. Aplikasi tidak akan diam-diam memakai filesystem lokal yang tidak persisten.
+- Buat Blob Store pada project Vercel dan tambahkan `BLOB_READ_WRITE_TOKEN` ke Environment Variables.
+- Untuk memakai Blob saat development lokal, atur token tersebut di environment lokal. Tanpanya, aplikasi memakai penyimpanan lokal.
+- Form tambah produk mengirim gambar dan data produk bersama-sama. Jika penyimpanan produk gagal, gambar yang baru diunggah dibersihkan.
+- Upload Blob melalui server dibatasi 4 MB agar berada di bawah batas ukuran request Vercel; upload lokal dibatasi 10 MB.
 
 ---
 
@@ -87,7 +98,8 @@ tumbas/
 │   └── users.json
 ├── img/
 ├── lib/
-│   └── data-store.js
+│   ├── data-store.js
+│   └── storage.js
 ├── public/
 │   ├── 404.html
 │   ├── index.html
@@ -114,7 +126,7 @@ Keterangan singkat:
 - `img/` digunakan untuk menyimpan upload gambar produk
 - `routes/public.js` berisi endpoint katalog yang dapat diakses publik
 - `routes/admin.js` berisi halaman, autentikasi, upload, dan CRUD admin
-- `lib/data-store.js` menyediakan helper baca/tulis JSON untuk router
+- `lib/data-store.js` menyediakan helper baca/tulis JSON lokal atau Vercel Blob
 
 ---
 
@@ -144,10 +156,10 @@ Server menggunakan Express.js dengan pembagian tugas sebagai berikut:
 - `server.js` mengatur middleware, file statis, sesi, dan pemasangan router
 - `routes/public.js` menangani katalog produk publik
 - `routes/admin.js` menangani halaman dan endpoint admin; upload dan CRUD produk dilindungi `requireAuth`
-- `lib/data-store.js` menangani operasi baca/tulis JSON file-based
-- `express.static()` menyajikan file dari `public/` dan gambar dari `img/`
+- `lib/data-store.js` menangani operasi baca/tulis JSON lokal atau Vercel Blob
+- `express.static()` menyajikan file dari `public/` dan gambar lokal dari `img/`; Blob menyajikan gambar dari URL publiknya
 - Endpoint login, status sesi, dan logout dapat dipanggil tanpa sesi aktif
-- `multer` menangani upload dengan batas ukuran 10 MB
+- `multer` menangani upload maksimal 10 MB lokal atau 4 MB di Vercel Blob
 
 ---
 
@@ -439,30 +451,29 @@ POST /api/products/upload
 Content-Type: multipart/form-data
 ```
 
-Kirim file pada field `image`; ukuran maksimal 10 MB.
+Kirim file pada field `image`; ukuran maksimal 10 MB secara lokal atau 4 MB untuk Blob di Vercel.
 
 ```text
 image = <file-gambar>
 ```
 
-Respons sukses:
+Respons sukses berisi path lokal (`/img/products/...`) atau URL publik Vercel Blob, sesuai mode storage:
 
 ```json
 {
-  "image": "/img/1720000000000-kue-lompong.jpg"
+  "image": "/img/products/8c6d6da0-kue-lompong.jpg"
 }
 ```
 
-Respons error yang mungkin diterima: `401` jika belum login, `400` jika file tidak dikirim, dan `413` jika ukuran melebihi batas. Server saat ini belum memvalidasi tipe atau isi file.
+Endpoint ini dipertahankan untuk klien lama. Form dashboard memakai endpoint tambah produk agar gambar dan data produk disimpan dalam satu alur. Tipe file yang diterima JPEG, PNG, WebP, GIF, dan AVIF.
 
 #### 6. Tambah Produk
 
 ```http
 POST /api/products
-Content-Type: application/json
 ```
 
-Request dengan session admin aktif:
+Untuk gambar dari URL, kirim `application/json` dengan field `image`. Untuk upload file, kirim `multipart/form-data` dengan field `product` berisi JSON data produk (tanpa `image`) dan field `image` berisi file. Kedua mode memerlukan session admin aktif.
 
 ```json
 {
@@ -470,7 +481,7 @@ Request dengan session admin aktif:
   "price_range": "Rp 25.000",
   "description": "Deskripsi produk baru",
   "category_tab": "khas",
-  "image": "/img/produk-baru.jpg",
+  "image": "https://example.com/produk-baru.jpg",
   "sellers": [
     {
       "name": "Toko A",
@@ -491,7 +502,7 @@ Response:
   "price_range": "Rp 25.000",
   "description": "Deskripsi produk baru",
   "category_tab": "khas",
-  "image": "/img/produk-baru.jpg",
+  "image": "https://example.com/produk-baru.jpg",
   "sellers": [
     {
       "name": "Toko A",
@@ -584,8 +595,8 @@ curl -X POST http://localhost:3000/api/products \
 2. Login rate limiting maksimal 3 kegagalan per client key dalam 2 menit; counter disimpan di memori proses
 3. Session admin menggunakan `express-session`
 4. Proteksi endpoint admin lewat middleware `requireAuth`
-5. Upload produk memerlukan sesi admin dan dibatasi maksimal 10 MB
-6. Nama file upload diberi awalan timestamp dan spasi diganti tanda hubung; server belum memvalidasi tipe atau isi file
+5. Upload produk memerlukan sesi admin; tipe gambar dibatasi ke JPEG, PNG, WebP, GIF, dan AVIF
+6. Ukuran upload dibatasi 10 MB secara lokal dan 4 MB saat memakai Blob di Vercel
 
 ### Catatan untuk production
 
@@ -603,8 +614,8 @@ Beberapa detail penting yang perlu diperhatikan dari implementasi saat ini:
 - `server.js` menggunakan `type: module`, jadi sintaks JavaScript menggunakan ES Modules
 - Router publik dan admin dipisahkan ke `routes/public.js` dan `routes/admin.js`
 - Session secret saat ini dibuat langsung di kode (`super-secret-key-101`)
-- Database bersifat file-based, sehingga semua data produk dan user disimpan di JSON
-- Endpoint `DELETE /api/products/:id` juga akan mencoba menghapus file gambar terkait jika file ada di folder `img/`
+- Penyimpanan lokal memakai JSON di `data/`; dengan Blob token, data JSON disimpan di Vercel Blob
+- Endpoint `DELETE /api/products/:id` menghapus gambar yang dikelola aplikasi dari `img/` atau Vercel Blob; URL gambar eksternal tidak dihapus
 - Halaman admin menyediakan dua metode input gambar: URL dan upload file
 - Dashboard menyaring seller yang seluruh field-nya kosong sebelum mengirim payload produk
 

@@ -425,14 +425,25 @@
 
           const productId = this.deleteTarget.id;
           const productName = this.deleteTarget.name;
-          this.closeDeleteModal();
+          try {
+            const response = await fetch(`/api/products/${encodeURIComponent(productId)}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (!response.ok) {
+              await this.loadProducts();
+              if (result.deletedId) this.closeDeleteModal();
+              alert(result.error || 'Gagal menghapus produk');
+              return;
+            }
+            this.closeDeleteModal();
+            await this.loadProducts();
 
-          await fetch(`/api/products/${productId}`, { method: 'DELETE' });
-          await this.loadProducts();
-
-          this.successTitle = 'Produk Berhasil Dihapus';
-          this.successMessage = `${productName} telah berhasil dihapus dari katalog.`;
-          this.showSuccessModal = true;
+            this.successTitle = 'Produk Berhasil Dihapus';
+            this.successMessage = `${productName} telah berhasil dihapus dari katalog.`;
+            this.showSuccessModal = true;
+          } catch (error) {
+            alert('Terjadi kesalahan saat menghapus produk. Periksa koneksi lalu coba lagi.');
+            console.error(error);
+          }
         },
         openModalTambah() {
           this.showAddProductModal = true;
@@ -512,39 +523,37 @@
               return;
             }
 
-            const uploadFormData = new FormData();
-            uploadFormData.append('image', this.selectedImageFile);
+            const productFormData = new FormData();
+            productFormData.append('product', JSON.stringify(payload));
+            productFormData.append('image', this.selectedImageFile);
 
-            const uploadRes = await fetch('/api/products/upload', {
+            const response = await fetch('/api/products', {
               method: 'POST',
-              body: uploadFormData
+              body: productFormData
             });
 
-            const uploadData = await uploadRes.json();
-
-            if (!uploadRes.ok) {
-              alert(uploadData.error || 'Gagal mengupload gambar');
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              alert(result.error || 'Gagal menambah produk');
               return;
             }
-
-            payload.image = uploadData.image;
           } else {
             if (!payload.image || !payload.image.trim()) {
               alert('Masukkan URL gambar produk');
               return;
             }
-          }
 
-          const res = await fetch('/api/products', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
+            const response = await fetch('/api/products', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
 
-          if (!res.ok) {
-            const data = await res.json();
-            alert(data.error || 'Gagal menambah produk');
-            return;
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              alert(result.error || 'Gagal menambah produk');
+              return;
+            }
           }
 
           this.closeModalTambah();
