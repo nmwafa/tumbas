@@ -60,6 +60,7 @@ const IMAGE_TYPES = new Map([
   ["image/avif", ".avif"],
 ]);
 
+// Middleware untuk mengunggah gambar produk; membatasi ukuran file dan tipe file yang diizinkan.
 const uploadProductImage = (req, res, next) => {
   let storageMode;
   try {
@@ -72,7 +73,7 @@ const uploadProductImage = (req, res, next) => {
     storage: multer.memoryStorage(),
     limits: {
       // Vercel server uploads have a 4.5 MB request-body ceiling.
-      fileSize: storageMode === "blob" ? 4 * 1024 * 1024 : 10 * 1024 * 1024,
+      fileSize: storageMode === "blob" ? 4 * 1024 * 1024 : 5 * 1024 * 1024,
     },
     fileFilter: (request, file, callback) => {
       if (!IMAGE_TYPES.has(file.mimetype)) {
@@ -86,7 +87,7 @@ const uploadProductImage = (req, res, next) => {
 
   upload.single("image")(req, res, (error) => {
     if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
-      const maxSize = storageMode === "blob" ? "4 MB" : "10 MB";
+      const maxSize = storageMode === "blob" ? "4 MB" : "5 MB";
       return res.status(413).json({ error: `Ukuran gambar maksimal ${maxSize}` });
     }
     if (error?.code === "UNSUPPORTED_IMAGE_TYPE") {
@@ -97,6 +98,7 @@ const uploadProductImage = (req, res, next) => {
   });
 };
 
+// Fungsi untuk menyimpan gambar produk ke penyimpanan lokal atau Blob, tergantung pada mode penyimpanan yang digunakan.
 async function saveProductImage(file) {
   const extension = IMAGE_TYPES.get(file.mimetype);
   const pathname = `products/${randomUUID()}${extension}`;
@@ -116,6 +118,7 @@ async function saveProductImage(file) {
   return { image: `/img/${pathname}`, localPath };
 }
 
+// Fungsi untuk menghapus gambar produk dari penyimpanan lokal atau Blob, tergantung pada mode penyimpanan yang digunakan.
 async function deleteProductImage(product) {
   if (typeof product?.image !== "string") return;
 
@@ -166,6 +169,7 @@ async function deleteProductImage(product) {
   }
 }
 
+// Membuat objek produk baru dari payload yang diterima; memvalidasi data dan memastikan gambar produk valid.
 function getNewProduct(payload, image) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw badRequest("Data produk tidak valid.");
@@ -203,12 +207,14 @@ function getNewProduct(payload, image) {
   };
 }
 
+// Fungsi untuk membuat error dengan status 400 (Bad Request) dan pesan yang diberikan.
 function badRequest(message) {
   const error = new Error(message);
   error.status = 400;
   return error;
 }
 
+// Fungsi untuk memeriksa apakah gambar produk diizinkan; hanya menerima URL HTTP(S) atau path lokal yang valid.
 function isAllowedProductImage(image) {
   if (image.startsWith("/img/")) return true;
   try {
