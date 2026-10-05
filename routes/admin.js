@@ -9,6 +9,8 @@ import { del, put } from "@vercel/blob";
 import { readData, writeData } from "../lib/data-store.js";
 import { getStorageMode } from "../lib/storage.js";
 
+// ==================== KONFIGURASI & SETUP ====================
+
 // Rute admin untuk login, dashboard, dan manajemen produk.
 const adminRouter = Router();
 
@@ -18,24 +20,38 @@ const projectRoot = path.resolve(
   "..",
 );
 
+// ==================== AUTENTIKASI - KONFIGURASI ====================
+
 // Simpan percobaan login untuk setiap alamat IP untuk mencegah brute-force attack.
 const loginAttempts = new Map();
 const MAX_LOGIN_ATTEMPTS = 3;
 const LOGIN_ATTEMPT_RESET_MS = 2 * 60 * 1000;
 
-// Fungsi untuk mendapatkan kunci unik untuk setiap klien berdasarkan alamat IP
+// ==================== AUTENTIKASI - FUNGSI HELPER ====================
+
+/**
+ * Mendapatkan kunci unik untuk setiap klien berdasarkan alamat IP
+ */
 const getClientKey = (req) => {
   return req.socket.remoteAddress || req.ip || "unknown";
 };
 
-// Memastikan bahwa rute admin hanya dapat diakses oleh pengguna yang telah diautentikasi.
+/**
+ * Memastikan bahwa rute admin hanya dapat diakses oleh pengguna yang telah diautentikasi.
+ */
 const requireAuth = (req, res, next) => {
   if (!req.session.admin)
     return res.status(401).json({ error: "Unauthorized" });
   next();
 };
 
-// Login dan logout admin; percobaan login dibatasi untuk mencegah brute-force attack.
+// ==================== AUTENTIKASI - RUTE LOGIN ====================
+
+/**
+ * POST /api/auth/login
+ * Login admin dengan username dan password
+ * Mencegah brute-force attack dengan membatasi percobaan login
+ */
 adminRouter.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body;
   const clientKey = getClientKey(req);
@@ -78,10 +94,46 @@ adminRouter.post("/api/auth/login", async (req, res) => {
   res.status(401).json({ error: "Username atau password salah!" });
 });
 
-// Memeriksa status login admin; mengembalikan informasi apakah admin sedang login atau tidak.
+// ==================== AUTENTIKASI - RUTE STATUS & LOGOUT ====================
+
+/**
+ * GET /api/auth/status
+ * Memeriksa status login admin; mengembalikan informasi apakah admin sedang login atau tidak.
+ */
 adminRouter.get("/api/auth/status", (req, res) => {
   res.json({ loggedIn: !!req.session.admin });
 });
+
+/**
+ * POST /api/auth/logout
+ * Logout admin; menghapus sesi untuk mengakhiri login.
+ */
+adminRouter.post("/api/auth/logout", (req, res) => {
+  req.session.destroy();
+  res.json({ success: true });
+});
+
+// ==================== HALAMAN ADMIN - LOGIN & DASHBOARD ====================
+
+/**
+ * GET /4dm1n
+ * Halaman login admin; redirect ke dashboard jika sudah login
+ */
+adminRouter.get("/4dm1n", (req, res) => {
+  if (req.session.admin) return res.redirect("/4dm1n/dashboard");
+  res.sendFile(path.join(projectRoot, "views", "admin-login.html"));
+});
+
+/**
+ * GET /4dm1n/dashboard
+ * Halaman dashboard admin; hanya dapat diakses jika admin telah login.
+ */
+adminRouter.get("/4dm1n/dashboard", (req, res) => {
+  if (!req.session.admin) return res.redirect("/");
+  res.sendFile(path.join(projectRoot, "views", "admin-dashboard.html"));
+});
+
+// ==================== PRODUK - KONFIGURASI UPLOAD ====================
 
 const IMAGE_TYPES = new Map([
   ["image/jpeg", ".jpg"],
@@ -94,7 +146,12 @@ const IMAGE_TYPES = new Map([
 const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024;
 const MAX_FILE_SIZE_MB = "4 MB";
 
-// Middleware untuk mengunggah gambar produk; membatasi ukuran file dan tipe file yang diizinkan.
+// ==================== PRODUK - MIDDLEWARE UPLOAD ====================
+
+/**
+ * Middleware untuk mengunggah gambar produk
+ * Membatasi ukuran file dan tipe file yang diizinkan.
+ */
 const uploadProductImage = (req, res, next) => {
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -128,7 +185,11 @@ const uploadProductImage = (req, res, next) => {
   });
 };
 
-// Fungsi untuk menyimpan gambar produk ke penyimpanan lokal atau Blob, tergantung pada mode penyimpanan yang digunakan.
+// ==================== PRODUK - FUNGSI HELPER ====================
+
+/**
+ * Menyimpan gambar produk ke penyimpanan lokal atau Blob, tergantung pada mode penyimpanan.
+ */
 async function saveProductImage(file) {
   const extension = IMAGE_TYPES.get(file.mimetype);
   const pathname = `products/${randomUUID()}${extension}`;
@@ -148,7 +209,9 @@ async function saveProductImage(file) {
   return { image: `/img/${pathname}`, localPath };
 }
 
-// Fungsi untuk menghapus gambar produk dari penyimpanan lokal atau Blob, tergantung pada mode penyimpanan yang digunakan.
+/**
+ * Menghapus gambar produk dari penyimpanan lokal atau Blob, tergantung pada mode penyimpanan.
+ */
 async function deleteProductImage(product) {
   if (!product?.image || typeof product.image !== "string") return;
 
@@ -189,7 +252,52 @@ async function deleteProductImage(product) {
   }
 }
 
-// Membuat objek produk baru dari payload yang diterima; memvalidasi data dan memastikan gambar produk valid.
+/**
+ * Membersihkan gambar yang sudah disimpan saat terjadi error
+ */
+async function cleanupImage(savedImage) {
+  if (savedImage.localPath) {
+    try {
+      await fs.unlink(savedImage.localPath);
+    } catch (error) {
+      if (error.code !== "ENOENT") console.error("Cleanup error:", error);
+    }
+  } else if (savedImage.pathname && getStorageMode() === "blob") {
+    try {
+      await del(savedImage.pathname);
+    } catch (error) {
+      console.error("Blob cleanup error:", error);
+    }
+  }
+}
+
+/**
+ * Membuat error dengan status 400 (Bad Request)
+ */
+function badRequest(message) {
+  const error = new Error(message);
+  error.status = 400;
+  return error;
+}
+
+/**
+ * Memeriksa apakah gambar produk diizinkan
+ * Hanya menerima URL HTTP(S) atau path lokal yang valid.
+ */
+function isAllowedProductImage(image) {
+  if (!image?.trim()) return false;
+  if (image.startsWith("/img/")) return true;
+  try {
+    return ["http:", "https:"].includes(new URL(image).protocol);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Membuat objek produk baru dari payload yang diterima
+ * Memvalidasi data dan memastikan gambar produk valid.
+ */
 function getNewProduct(payload, image) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw badRequest("Data produk tidak valid.");
@@ -229,37 +337,12 @@ function getNewProduct(payload, image) {
   };
 }
 
-// Fungsi untuk membuat error dengan status 400 (Bad Request) dan pesan yang diberikan.
-function badRequest(message) {
-  const error = new Error(message);
-  error.status = 400;
-  return error;
-}
+// ==================== PRODUK - RUTE CRUD ====================
 
-// Fungsi untuk memeriksa apakah gambar produk diizinkan; hanya menerima URL HTTP(S) atau path lokal yang valid.
-function isAllowedProductImage(image) {
-  if (!image?.trim()) return false;
-  if (image.startsWith("/img/")) return true;
-  try {
-    return ["http:", "https:"].includes(new URL(image).protocol);
-  } catch {
-    return false;
-  }
-}
-
-// Halaman login dan dashboard admin; status login dan logout dikelola melalui sesi.
-adminRouter.get("/4dm1n", (req, res) => {
-  if (req.session.admin) return res.redirect("/4dm1n/dashboard");
-  res.sendFile(path.join(projectRoot, "views", "admin-login.html"));
-});
-
-// Halaman dashboard admin; hanya dapat diakses jika admin telah login.
-adminRouter.get("/4dm1n/dashboard", (req, res) => {
-  if (!req.session.admin) return res.redirect("/");
-  res.sendFile(path.join(projectRoot, "views", "admin-dashboard.html"));
-});
-
-// Tambah Produk
+/**
+ * POST /api/products
+ * Tambah produk baru dengan gambar
+ */
 adminRouter.post(
   "/api/products",
   requireAuth,
@@ -298,7 +381,10 @@ adminRouter.post(
   },
 );
 
-// Update Produk
+/**
+ * PUT /api/products/:id
+ * Update produk (fitur dinonaktifkan untuk saat ini)
+ */
 // adminRouter.put("/api/products/:id", requireAuth, async (req, res) => {
 //   const products = await readData("products.json");
 //   const index = products.findIndex((product) => product.id === req.params.id);
@@ -310,7 +396,10 @@ adminRouter.post(
 //   res.json(products[index]);
 // });
 
-// Hapus Produk dan file gambar terkait jika ada
+/**
+ * DELETE /api/products/:id
+ * Hapus produk dan file gambar terkait
+ */
 adminRouter.delete("/api/products/:id", requireAuth, async (req, res) => {
   try {
     const products = await readData("products.json");
@@ -344,10 +433,6 @@ adminRouter.delete("/api/products/:id", requireAuth, async (req, res) => {
   }
 });
 
-// Logout admin; menghapus sesi untuk mengakhiri login.
-adminRouter.post("/api/auth/logout", (req, res) => {
-  req.session.destroy();
-  res.json({ success: true });
-});
+// ==================== EXPORT ====================
 
 export default adminRouter;
