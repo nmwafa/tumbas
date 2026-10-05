@@ -23,12 +23,9 @@ const loginAttempts = new Map();
 const MAX_LOGIN_ATTEMPTS = 3;
 const LOGIN_ATTEMPT_RESET_MS = 2 * 60 * 1000;
 
-// Mendapatkan kunci unik untuk setiap klien berdasarkan alamat IP atau header 'x-forwarded-for'.
+// Fungsi untuk mendapatkan kunci unik untuk setiap klien berdasarkan alamat IP
 const getClientKey = (req) => {
-  const forwardedFor = req.headers["x-forwarded-for"];
-  return (
-    (forwardedFor ? forwardedFor.split(",")[0].trim() : req.ip) || "unknown"
-  );
+  return req.socket.remoteAddress || req.ip || "unknown";
 };
 
 // Mengambil jumlah percobaan login yang gagal untuk alamat IP tertentu; jika sudah melewati batas waktu, reset percobaan.
