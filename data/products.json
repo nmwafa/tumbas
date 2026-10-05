@@ -109,5 +109,21 @@
     "image": "/img/1791160448295-sate-lontong.jpg",
     "description": "Sate lontong",
     "sellers": []
+  },
+  {
+    "id": "prod_1791170135570",
+    "name": "Sate Kambing Pak Mustofa",
+    "category_tab": "khas",
+    "price_range": "Rp 50.000",
+    "image": "/img/1791170134830-sate-kambing-bumbu-kecap.jpg",
+    "description": "sate dan gulai kambing pak mustofa",
+    "sellers": [
+      {
+        "name": "pak mustofa",
+        "phone": "62888888888",
+        "address": "winong",
+        "maps_url": "https://maps.app.goo.gl/nxaFiiDqHL2ZWNGK7"
+      }
+    ]
   }
 ]
