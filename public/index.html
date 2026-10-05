@@ -108,7 +108,7 @@
       <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
         <template x-for="product in filteredProducts" :key="product.id">
         <div @click="selectProduct(product)" class="bg-white rounded-xl sm:rounded-2xl shadow-[0_10px_30px_rgba(16,185,129,0.08)] hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(16,185,129,0.12)] border border-emerald-100/80 overflow-hidden cursor-pointer flex flex-col transition-all duration-200">
-          <img :src="product.image" :alt="product.name" class="h-32 w-full object-cover sm:h-52" loading="lazy">
+          <img :src="product.image" :alt="product.name" class="h-32 w-full object-cover sm:h-52" loading="${i < 8 ? 'eager' : 'lazy'}">
           <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between">
             <div>
               <h3 class="font-bold text-gray-900 leading-snug text-sm sm:text-base" x-text="product.name"></h3>
