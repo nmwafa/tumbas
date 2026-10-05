@@ -357,16 +357,16 @@ adminRouter.post(
 );
 
 // Update Produk
-adminRouter.put("/api/products/:id", requireAuth, async (req, res) => {
-  const products = await readData("products.json");
-  const index = products.findIndex((product) => product.id === req.params.id);
-  if (index === -1)
-    return res.status(404).json({ error: "Produk tidak ditemukan" });
+// adminRouter.put("/api/products/:id", requireAuth, async (req, res) => {
+//   const products = await readData("products.json");
+//   const index = products.findIndex((product) => product.id === req.params.id);
+//   if (index === -1)
+//     return res.status(404).json({ error: "Produk tidak ditemukan" });
 
-  products[index] = { ...products[index], ...req.body };
-  await writeData("products.json", products);
-  res.json(products[index]);
-});
+//   products[index] = { ...products[index], ...req.body };
+//   await writeData("products.json", products);
+//   res.json(products[index]);
+// });
 
 // Hapus Produk dan file gambar terkait jika ada
 adminRouter.delete("/api/products/:id", requireAuth, async (req, res) => {
