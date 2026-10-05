@@ -13,7 +13,12 @@ const PORT = 3000;
 // Parse API payloads, serve public assets, and initialize browser sessions.
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/img', express.static(path.join(__dirname, 'img')));
+app.use('/img', express.static(path.join(__dirname, 'img'), {
+  maxAge: 24 * 60 * 60 * 1000,
+  immutable: true,
+  etag: true,
+  lastModified: true
+}));
 app.use(session({
   secret: 'super-secret-key-101',
   resave: false,
@@ -21,6 +26,7 @@ app.use(session({
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
+// Gunakan router untuk rute publik dan admin.
 app.use(publicRouter);
 app.use(adminRouter);
 

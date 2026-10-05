@@ -8,6 +8,8 @@ import { readData, writeData } from "../lib/data-store.js";
 
 // Rute admin untuk login, dashboard, dan manajemen produk.
 const adminRouter = Router();
+
+// Menentukan direktori root proyek untuk menyimpan file gambar dan data.
 const projectRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
@@ -145,11 +147,7 @@ adminRouter.post("/api/auth/logout", (req, res) => {
 });
 
 // Upload gambar produk
-adminRouter.post(
-  "/api/products/upload",
-  requireAuth,
-  uploadProductImage,
-  (req, res) => {
+adminRouter.post("/api/products/upload", requireAuth, uploadProductImage, (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "File gambar tidak ditemukan" });
     }
