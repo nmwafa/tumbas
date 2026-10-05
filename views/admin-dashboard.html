@@ -508,7 +508,10 @@
           const payload = {
             ...this.formProduct,
             sellers: this.formProduct.sellers
-              .filter(seller => seller.name || seller.phone || seller.address || seller.maps_url)
+              .filter(seller =>
+              (seller.name?.trim() && seller.phone?.trim() &&
+                seller.address?.trim() && seller.maps_url?.trim())
+              )
               .map(seller => ({
                 name: seller.name.trim(),
                 phone: seller.phone.trim(),

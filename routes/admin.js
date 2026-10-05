@@ -194,7 +194,7 @@ function getNewProduct(payload, image) {
   }
 
   return {
-    id: `prod_${randomUUID()}`,
+    id: `prod_${Date.now()}`,
     name: name.trim(),
     category_tab,
     price_range: price_range.trim(),
@@ -275,7 +275,7 @@ adminRouter.post("/api/auth/login", async (req, res) => {
 
 // Memeriksa status login admin; mengembalikan informasi apakah admin sedang login atau tidak.
 adminRouter.get("/api/auth/status", (req, res) => {
-  res.json({ loggedIn: !!req.session.admin || null });
+  res.json({ loggedIn: !!req.session.admin });
 });
 
 // Logout admin; menghapus sesi untuk mengakhiri login.
