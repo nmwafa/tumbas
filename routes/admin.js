@@ -35,6 +35,54 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
+// Login dan logout admin; percobaan login dibatasi untuk mencegah brute-force attack.
+adminRouter.post("/api/auth/login", async (req, res) => {
+  const { username, password } = req.body;
+  const clientKey = getClientKey(req);
+  const attempts = loginAttempts.get(clientKey);
+  let failedAttempts = 0;
+
+  if (attempts && Date.now() <= attempts.expiresAt) {
+    failedAttempts = attempts.count;
+  } else if (attempts) {
+    loginAttempts.delete(clientKey);
+  }
+
+  if (failedAttempts >= MAX_LOGIN_ATTEMPTS) {
+    return res.status(429).json({
+      error: "Terlalu banyak percobaan login. Silakan coba lagi nanti.",
+    });
+  }
+
+  const users = await readData("users.json");
+  const user = users.find((entry) => entry.username === username);
+
+  if (user && (await bcrypt.compare(password, user.password))) {
+    loginAttempts.delete(clientKey);
+    req.session.admin = { id: user.id, name: user.name };
+    return res.json({ success: true, name: user.name });
+  }
+
+  const nextFailedAttempts = failedAttempts + 1;
+  loginAttempts.set(clientKey, {
+    count: nextFailedAttempts,
+    expiresAt: Date.now() + LOGIN_ATTEMPT_RESET_MS,
+  });
+
+  if (nextFailedAttempts >= MAX_LOGIN_ATTEMPTS) {
+    return res.status(429).json({
+      error: "Percobaan login salah melebihi batas. Silakan coba lagi nanti.",
+    });
+  }
+
+  res.status(401).json({ error: "Username atau password salah!" });
+});
+
+// Memeriksa status login admin; mengembalikan informasi apakah admin sedang login atau tidak.
+adminRouter.get("/api/auth/status", (req, res) => {
+  res.json({ loggedIn: !!req.session.admin });
+});
+
 const IMAGE_TYPES = new Map([
   ["image/jpeg", ".jpg"],
   ["image/png", ".png"],
@@ -43,8 +91,8 @@ const IMAGE_TYPES = new Map([
   ["image/avif", ".avif"],
 ]);
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-const MAX_FILE_SIZE_MB = "5 MB";
+const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024;
+const MAX_FILE_SIZE_MB = "4 MB";
 
 // Middleware untuk mengunggah gambar produk; membatasi ukuran file dan tipe file yang diizinkan.
 const uploadProductImage = (req, res, next) => {
@@ -211,60 +259,6 @@ adminRouter.get("/4dm1n/dashboard", (req, res) => {
   res.sendFile(path.join(projectRoot, "views", "admin-dashboard.html"));
 });
 
-// Login dan logout admin; percobaan login dibatasi untuk mencegah brute-force attack.
-adminRouter.post("/api/auth/login", async (req, res) => {
-  const { username, password } = req.body;
-  const clientKey = getClientKey(req);
-  const attempts = loginAttempts.get(clientKey);
-  let failedAttempts = 0;
-
-  if (attempts && Date.now() <= attempts.expiresAt) {
-    failedAttempts = attempts.count;
-  } else if (attempts) {
-    loginAttempts.delete(clientKey);
-  }
-
-  if (failedAttempts >= MAX_LOGIN_ATTEMPTS) {
-    return res.status(429).json({
-      error: "Terlalu banyak percobaan login. Silakan coba lagi nanti.",
-    });
-  }
-
-  const users = await readData("users.json");
-  const user = users.find((entry) => entry.username === username);
-
-  if (user && (await bcrypt.compare(password, user.password))) {
-    loginAttempts.delete(clientKey);
-    req.session.admin = { id: user.id, name: user.name };
-    return res.json({ success: true, name: user.name });
-  }
-
-  const nextFailedAttempts = failedAttempts + 1;
-  loginAttempts.set(clientKey, {
-    count: nextFailedAttempts,
-    expiresAt: Date.now() + LOGIN_ATTEMPT_RESET_MS,
-  });
-
-  if (nextFailedAttempts >= MAX_LOGIN_ATTEMPTS) {
-    return res.status(429).json({
-      error: "Percobaan login salah melebihi batas. Silakan coba lagi nanti.",
-    });
-  }
-
-  res.status(401).json({ error: "Username atau password salah!" });
-});
-
-// Memeriksa status login admin; mengembalikan informasi apakah admin sedang login atau tidak.
-adminRouter.get("/api/auth/status", (req, res) => {
-  res.json({ loggedIn: !!req.session.admin });
-});
-
-// Logout admin; menghapus sesi untuk mengakhiri login.
-adminRouter.post("/api/auth/logout", (req, res) => {
-  req.session.destroy();
-  res.json({ success: true });
-});
-
 // Tambah Produk
 adminRouter.post(
   "/api/products",
@@ -348,6 +342,12 @@ adminRouter.delete("/api/products/:id", requireAuth, async (req, res) => {
     console.error("Error saat menghapus produk:", error);
     res.status(500).json({ error: "Terjadi kesalahan server" });
   }
+});
+
+// Logout admin; menghapus sesi untuk mengakhiri login.
+adminRouter.post("/api/auth/logout", (req, res) => {
+  req.session.destroy();
+  res.json({ success: true });
 });
 
 export default adminRouter;
