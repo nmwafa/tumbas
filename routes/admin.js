@@ -28,20 +28,6 @@ const getClientKey = (req) => {
   return req.socket.remoteAddress || req.ip || "unknown";
 };
 
-// Mengambil jumlah percobaan login yang gagal untuk alamat IP tertentu; jika sudah melewati batas waktu, reset percobaan.
-const getFailedAttempts = (clientKey) => {
-  const attempts = loginAttempts.get(clientKey);
-
-  if (!attempts) return 0;
-
-  if (Date.now() > attempts.expiresAt) {
-    loginAttempts.delete(clientKey);
-    return 0;
-  }
-
-  return attempts.count;
-};
-
 // Memastikan bahwa rute admin hanya dapat diakses oleh pengguna yang telah diautentikasi.
 const requireAuth = (req, res, next) => {
   if (!req.session.admin)
@@ -57,24 +43,19 @@ const IMAGE_TYPES = new Map([
   ["image/avif", ".avif"],
 ]);
 
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_FILE_SIZE_MB = "5 MB";
+
 // Middleware untuk mengunggah gambar produk; membatasi ukuran file dan tipe file yang diizinkan.
 const uploadProductImage = (req, res, next) => {
-  let storageMode;
-  try {
-    storageMode = getStorageMode();
-  } catch (error) {
-    return next(error);
-  }
-
   const upload = multer({
     storage: multer.memoryStorage(),
-    limits: {
-      // Batasi ukuran file gambar hingga 5 MB
-      fileSize: 5 * 1024 * 1024,
-    },
+    limits: { fileSize: MAX_FILE_SIZE_BYTES },
     fileFilter: (request, file, callback) => {
       if (!IMAGE_TYPES.has(file.mimetype)) {
-        const error = new Error("Gunakan file JPEG, PNG, WebP, GIF, atau AVIF.");
+        const error = new Error(
+          "Gunakan file JPEG, PNG, WebP, GIF, atau AVIF.",
+        );
         error.code = "UNSUPPORTED_IMAGE_TYPE";
         return callback(error);
       }
@@ -83,9 +64,13 @@ const uploadProductImage = (req, res, next) => {
   });
 
   upload.single("image")(req, res, (error) => {
-    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
-      const maxSize = "5 MB";
-      return res.status(413).json({ error: `Ukuran gambar maksimal ${maxSize}` });
+    if (
+      error instanceof multer.MulterError &&
+      error.code === "LIMIT_FILE_SIZE"
+    ) {
+      return res
+        .status(413)
+        .json({ error: `Ukuran gambar maksimal ${MAX_FILE_SIZE_MB}` });
     }
     if (error?.code === "UNSUPPORTED_IMAGE_TYPE") {
       return res.status(415).json({ error: error.message });
@@ -117,47 +102,37 @@ async function saveProductImage(file) {
 
 // Fungsi untuk menghapus gambar produk dari penyimpanan lokal atau Blob, tergantung pada mode penyimpanan yang digunakan.
 async function deleteProductImage(product) {
-  if (typeof product?.image !== "string") return;
+  if (!product?.image || typeof product.image !== "string") return;
 
-  let imageUrl;
-  try {
-    imageUrl = new URL(product.image, "http://localhost");
-  } catch {
-    return;
-  }
+  const isBlob =
+    product.image.startsWith("https://") &&
+    product.image.includes(".blob.vercel-storage.com");
+  const isLocal = product.image.startsWith("/img/products/");
 
-  if (imageUrl.origin !== "http://localhost") {
-    const hostname = imageUrl.hostname.toLowerCase();
-    const isVercelBlob =
-      hostname.endsWith(".blob.vercel-storage.com") ||
-      hostname === "blob.vercel-storage.com";
-    if (!isVercelBlob || !imageUrl.pathname.startsWith("/products/")) return;
+  if (!isBlob && !isLocal) return; // Skip external images
 
+  // Delete from Blob
+  if (isBlob) {
     if (getStorageMode() !== "blob") {
-      throw new Error("BLOB_READ_WRITE_TOKEN diperlukan untuk menghapus gambar Blob.");
+      throw new Error(
+        "BLOB_READ_WRITE_TOKEN diperlukan untuk menghapus gambar Blob.",
+      );
     }
     await del(product.image);
     return;
   }
 
-  if (!imageUrl.pathname.startsWith("/img/")) return;
-
-  const imageRelativePath = imageUrl.pathname.slice("/img/".length);
-  const isCurrentUpload = imageRelativePath.startsWith("products/");
-  const isLegacyUpload = /^\d+-[^/]+$/.test(imageRelativePath);
-  if (!isCurrentUpload && !isLegacyUpload) return;
+  // Delete from local (skip di Vercel)
   if (process.env.VERCEL === "1") return;
 
-  const imageDirectory = path.resolve(projectRoot, "img");
-  const imagePath = path.resolve(imageDirectory, imageRelativePath);
-  const relativePath = path.relative(imageDirectory, imagePath);
-  if (
-    !relativePath ||
-    relativePath.startsWith("..") ||
-    path.isAbsolute(relativePath)
-  ) {
-    return;
-  }
+  const imagePath = path.resolve(
+    projectRoot,
+    "img",
+    product.image.slice("/img/".length),
+  );
+  const relative = path.relative(path.resolve(projectRoot, "img"), imagePath);
+
+  if (relative?.startsWith("..") || path.isAbsolute(relative)) return; // Safety
 
   try {
     await fs.unlink(imagePath);
@@ -190,7 +165,9 @@ function getNewProduct(payload, image) {
     throw badRequest("Gambar produk wajib diisi.");
   }
   if (!isAllowedProductImage(image)) {
-    throw badRequest("Gambar harus menggunakan URL HTTP(S) atau path gambar lokal.");
+    throw badRequest(
+      "Gambar harus menggunakan URL HTTP(S) atau path gambar lokal.",
+    );
   }
 
   return {
@@ -213,6 +190,7 @@ function badRequest(message) {
 
 // Fungsi untuk memeriksa apakah gambar produk diizinkan; hanya menerima URL HTTP(S) atau path lokal yang valid.
 function isAllowedProductImage(image) {
+  if (!image?.trim()) return false;
   if (image.startsWith("/img/")) return true;
   try {
     return ["http:", "https:"].includes(new URL(image).protocol);
@@ -237,14 +215,19 @@ adminRouter.get("/4dm1n/dashboard", (req, res) => {
 adminRouter.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body;
   const clientKey = getClientKey(req);
-  const failedAttempts = getFailedAttempts(clientKey);
+  const attempts = loginAttempts.get(clientKey);
+  let failedAttempts = 0;
+
+  if (attempts && Date.now() <= attempts.expiresAt) {
+    failedAttempts = attempts.count;
+  } else if (attempts) {
+    loginAttempts.delete(clientKey);
+  }
 
   if (failedAttempts >= MAX_LOGIN_ATTEMPTS) {
-    return res
-      .status(429)
-      .json({
-        error: "Terlalu banyak percobaan login. Silakan coba lagi nanti.",
-      });
+    return res.status(429).json({
+      error: "Terlalu banyak percobaan login. Silakan coba lagi nanti.",
+    });
   }
 
   const users = await readData("users.json");
@@ -263,11 +246,9 @@ adminRouter.post("/api/auth/login", async (req, res) => {
   });
 
   if (nextFailedAttempts >= MAX_LOGIN_ATTEMPTS) {
-    return res
-      .status(429)
-      .json({
-        error: "Percobaan login salah melebihi batas. Silakan coba lagi nanti.",
-      });
+    return res.status(429).json({
+      error: "Percobaan login salah melebihi batas. Silakan coba lagi nanti.",
+    });
   }
 
   res.status(401).json({ error: "Username atau password salah!" });
@@ -283,32 +264,6 @@ adminRouter.post("/api/auth/logout", (req, res) => {
   req.session.destroy();
   res.json({ success: true });
 });
-
-// Endpoint upload tetap tersedia untuk integrasi yang mengunggah gambar terpisah.
-adminRouter.post(
-  "/api/products/upload",
-  requireAuth,
-  uploadProductImage,
-  async (req, res, next) => {
-    let savedImage;
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "File gambar tidak ditemukan" });
-      }
-      savedImage = await saveProductImage(req.file);
-      res.json({ image: savedImage.image, pathname: savedImage.pathname });
-    } catch (error) {
-      if (savedImage) {
-        try {
-          await deleteProductImage({ image: savedImage.image });
-        } catch (cleanupError) {
-          console.error("Gagal membersihkan gambar upload:", cleanupError);
-        }
-      }
-      next(error);
-    }
-  },
-);
 
 // Tambah Produk
 adminRouter.post(
@@ -336,11 +291,7 @@ adminRouter.post(
       res.status(201).json(newProduct);
     } catch (error) {
       if (savedImage && !productStored) {
-        try {
-          await deleteProductImage({ image: savedImage.image });
-        } catch (cleanupError) {
-          console.error("Gagal membersihkan gambar upload:", cleanupError);
-        }
+        await cleanupImage(savedImage);
       }
       if (error instanceof SyntaxError) {
         return res.status(400).json({ error: "Data produk tidak valid." });
@@ -386,7 +337,8 @@ adminRouter.delete("/api/products/:id", requireAuth, async (req, res) => {
     } catch (error) {
       console.error("Produk terhapus, tetapi gambar gagal dihapus:", error);
       return res.status(500).json({
-        error: "Produk terhapus, tetapi gambar gagal dihapus. Hapus file secara manual atau periksa konfigurasi Blob.",
+        error:
+          "Produk terhapus, tetapi gambar gagal dihapus. Hapus file secara manual atau periksa konfigurasi Blob.",
         deletedId: product.id,
       });
     }
