@@ -38,7 +38,7 @@ Aplikasi web untuk mempromosikan produk UMKM Purworejo. Pembeli dapat melihat ka
 | **Backend** | Node.js, Express 5.2.1, express-session |
 | **Frontend** | HTML5, Tailwind CSS, Alpine.js |
 | **Storage** | JSON file lokal atau Vercel Blob |
-| **Upload** | Multer (10 MB lokal / 4 MB Blob) |
+| **Upload** | Multer 5MB |
 
 ## Instalasi
 

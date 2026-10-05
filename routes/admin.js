@@ -69,8 +69,8 @@ const uploadProductImage = (req, res, next) => {
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      // Vercel server uploads have a 4.5 MB request-body ceiling.
-      fileSize: storageMode === "blob" ? 4 * 1024 * 1024 : 5 * 1024 * 1024,
+      // Batasi ukuran file gambar hingga 5 MB
+      fileSize: 5 * 1024 * 1024,
     },
     fileFilter: (request, file, callback) => {
       if (!IMAGE_TYPES.has(file.mimetype)) {
@@ -84,7 +84,7 @@ const uploadProductImage = (req, res, next) => {
 
   upload.single("image")(req, res, (error) => {
     if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
-      const maxSize = storageMode === "blob" ? "4 MB" : "5 MB";
+      const maxSize = "5 MB";
       return res.status(413).json({ error: `Ukuran gambar maksimal ${maxSize}` });
     }
     if (error?.code === "UNSUPPORTED_IMAGE_TYPE") {
