@@ -116,5 +116,14 @@
         "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
       }
     ]
+  },
+  {
+    "id": "prod_1791160448690",
+    "name": "Sate Lontong",
+    "category_tab": "umum",
+    "price_range": "Rp 10.000.000",
+    "image": "/img/1791160448295-sate-lontong.jpg",
+    "description": "Sate lontong",
+    "sellers": []
   }
 ]
