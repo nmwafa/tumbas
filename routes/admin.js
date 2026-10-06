@@ -298,7 +298,7 @@ function isAllowedProductImage(image) {
  * Membuat objek produk baru dari payload yang diterima
  * Memvalidasi data dan memastikan gambar produk valid.
  */
-function getNewProduct(payload, image) {
+function getNewProduct(payload, image, id = `prod_${Date.now()}`) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw badRequest("Data produk tidak valid.");
   }
@@ -327,7 +327,7 @@ function getNewProduct(payload, image) {
   }
 
   return {
-    id: `prod_${Date.now()}`,
+    id,
     name: name.trim(),
     category_tab,
     price_range: price_range.trim(),
@@ -383,18 +383,62 @@ adminRouter.post(
 
 /**
  * PUT /api/products/:id
- * Update produk (fitur dinonaktifkan untuk saat ini)
+ * Memperbarui semua data produk dan opsional mengganti gambar.
  */
-// adminRouter.put("/api/products/:id", requireAuth, async (req, res) => {
-//   const products = await readData("products.json");
-//   const index = products.findIndex((product) => product.id === req.params.id);
-//   if (index === -1)
-//     return res.status(404).json({ error: "Produk tidak ditemukan" });
+adminRouter.put(
+  "/api/products/:id",
+  requireAuth,
+  uploadProductImage,
+  async (req, res, next) => {
+    let savedImage;
+    let productStored = false;
+    try {
+      const payload = req.is("multipart/form-data")
+        ? JSON.parse(req.body.product || "{}")
+        : req.body;
+      const products = await readData("products.json");
+      const productIndex = products.findIndex(
+        (product) => String(product.id) === req.params.id,
+      );
 
-//   products[index] = { ...products[index], ...req.body };
-//   await writeData("products.json", products);
-//   res.json(products[index]);
-// });
+      if (productIndex === -1) {
+        return res.status(404).json({ error: "Produk tidak ditemukan" });
+      }
+
+      const previousProduct = products[productIndex];
+      if (req.file) savedImage = await saveProductImage(req.file);
+      const updatedProduct = getNewProduct(
+        payload,
+        savedImage?.image || payload?.image,
+        previousProduct.id,
+      );
+      products[productIndex] = updatedProduct;
+      await writeData("products.json", products);
+      productStored = true;
+
+      if (savedImage && previousProduct.image !== updatedProduct.image) {
+        try {
+          await deleteProductImage(previousProduct);
+        } catch (error) {
+          console.error("Produk diperbarui, tetapi gambar lama gagal dihapus:", error);
+        }
+      }
+
+      res.json(updatedProduct);
+    } catch (error) {
+      if (savedImage && !productStored) {
+        await cleanupImage(savedImage);
+      }
+      if (error instanceof SyntaxError) {
+        return res.status(400).json({ error: "Data produk tidak valid." });
+      }
+      if (error.status === 400) {
+        return res.status(400).json({ error: error.message });
+      }
+      next(error);
+    }
+  },
+);
 
 /**
  * DELETE /api/products/:id

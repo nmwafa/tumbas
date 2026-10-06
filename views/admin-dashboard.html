@@ -93,7 +93,7 @@
               <th class="p-5" style="width: 40%;">Nama Produk</th>
               <th class="p-4 text-center" style="width: 15%;">Kategori</th>
               <th class="p-4 text-center" style="width: 15%;">Jumlah Penjual</th>
-              <th class="p-5 text-center" style="width: 15%;">Aksi</th>
+              <th class="p-5 text-center" style="width: 18%;">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -107,6 +107,15 @@
                 </td>
                 <td class="p-4 text-center" x-text="p.sellers.length"></td>
                 <td class="p-5 text-center">
+                  <button @click="openModalEdit(p)"
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-full text-emerald-700 hover:bg-emerald-100 transition"
+                    aria-label="Edit produk" title="Edit produk">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor" stroke-width="1.8">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="m16.862 4.487 2.651 2.651M5.25 18.75l3.75-.75L19.5 7.5a1.591 1.591 0 0 0-2.25-2.25L6.75 15.75l-1.5 3z" />
+                    </svg>
+                  </button>
                   <button @click="openDeleteModal(p)"
                     class="inline-flex items-center justify-center w-9 h-9 rounded-full text-red-600 hover:bg-red-100 transition"
                     aria-label="Hapus produk">
@@ -205,7 +214,7 @@
     <div @click.away="closeModalTambah"
       class="bg-white rounded-xl max-w-xl w-full max-h-[90vh] overflow-hidden border border-emerald-100/80 ring-1 ring-emerald-100 shadow-[0_24px_70px_rgba(16,185,129,0.18)]">
       <div class="flex items-center justify-between p-6 pb-3 bg-gray-50 ">
-        <h3 class="text-xl font-bold text-gray-900">Tambah Produk</h3>
+        <h3 class="text-xl font-bold text-gray-900" x-text="editingProduct ? 'Edit Produk' : 'Tambah Produk'">Tambah Produk</h3>
         <button @click="closeModalTambah"
           class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
       </div>
@@ -260,16 +269,17 @@
               </div>
 
               <input x-show="imageSource === 'url'" x-model="formProduct.image" @input="clearValidationError('image')"
-                type="url"
+                type="text"
                 class="w-full border border-emerald-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300"
                 placeholder="https://..." :required="imageSource === 'url'" :disabled="imageSource !== 'url'">
 
               <div x-show="imageSource === 'upload'" class="space-y-2">
-                <input type="file" accept="image/*" @change="handleImageFileChange" :required="imageSource === 'upload'"
+                <input type="file" accept="image/*" @change="handleImageFileChange"
+                  :required="imageSource === 'upload' && !editingProduct"
                   :disabled="imageSource !== 'upload'"
                   class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:bg-emerald-600 file:text-white file:text-xs file:font-semibold hover:file:bg-emerald-700">
                 <p class="text-[11px] text-gray-500"
-                  x-text="selectedImageFile ? 'File terpilih: ' + selectedImageFile.name : 'Belum ada file yang dipilih'">
+                  x-text="selectedImageFile ? 'File terpilih: ' + selectedImageFile.name : (editingProduct ? 'Biarkan kosong untuk memakai gambar saat ini.' : 'Belum ada file yang dipilih')">
                 </p>
               </div>
               <p x-show="validationErrors.image" x-text="validationErrors.image" class="mt-1 text-xs text-red-600"></p>
@@ -345,8 +355,8 @@
             <button type="button" @click="closeModalTambah"
               class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition">Batal</button>
             <button type="submit"
-              class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 shadow-md shadow-emerald-200 transition">Simpan
-              Produk</button>
+              class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 shadow-md shadow-emerald-200 transition"
+              x-text="editingProduct ? 'Simpan Perubahan' : 'Simpan Produk'">Simpan Produk</button>
           </div>
         </form>
       </div>
@@ -358,6 +368,7 @@
       return {
         products: [],
         showAddProductModal: false,
+        editingProduct: null,
         showLogoutConfirm: false,
         showSuccessModal: false,
         successTitle: 'Produk Berhasil Ditambahkan',
@@ -414,6 +425,26 @@
         openDeleteModal(product) {
           this.deleteTarget = product;
         },
+        openModalEdit(product) {
+          this.editingProduct = product;
+          this.formProduct = {
+            name: product.name || '',
+            category_tab: product.category_tab || 'khas',
+            price_range: product.price_range || '',
+            image: product.image || '',
+            description: product.description || '',
+            sellers: Array.isArray(product.sellers) ? product.sellers.map(seller => ({
+              name: seller.name || '',
+              phone: seller.phone || '',
+              address: seller.address || '',
+              maps_url: seller.maps_url || ''
+            })) : []
+          };
+          this.validationErrors = {};
+          this.imageSource = 'url';
+          this.selectedImageFile = null;
+          this.showAddProductModal = true;
+        },
         closeDeleteModal() {
           this.deleteTarget = null;
         },
@@ -446,12 +477,15 @@
           }
         },
         openModalTambah() {
+          this.closeModalTambah();
           this.showAddProductModal = true;
         },
         closeModalTambah() {
           this.showAddProductModal = false;
+          this.editingProduct = null;
           this.imageSource = 'url';
           this.selectedImageFile = null;
+          this.validationErrors = {};
           this.formProduct = {
             name: '',
             category_tab: 'khas',
@@ -489,7 +523,7 @@
             if (!this.formProduct.image.trim()) {
               errors.image = 'URL gambar produk wajib diisi';
             }
-          } else if (!this.selectedImageFile) {
+          } else if (!this.selectedImageFile && !this.editingProduct) {
             errors.image = 'Pilih file gambar produk terlebih dahulu';
           }
 
@@ -504,6 +538,12 @@
           if (!this.validateProductForm()) {
             return;
           }
+
+          const isEditing = Boolean(this.editingProduct);
+          const productUrl = isEditing
+            ? `/api/products/${encodeURIComponent(this.editingProduct.id)}`
+            : '/api/products';
+          const method = isEditing ? 'PUT' : 'POST';
 
           const payload = {
             ...this.formProduct,
@@ -520,50 +560,42 @@
               }))
           };
 
-          if (this.imageSource === 'upload') {
-            if (!this.selectedImageFile) {
-              alert('Pilih file gambar produk terlebih dahulu');
-              return;
-            }
-
+          let response;
+          if (this.imageSource === 'upload' && this.selectedImageFile) {
             const productFormData = new FormData();
             productFormData.append('product', JSON.stringify(payload));
             productFormData.append('image', this.selectedImageFile);
 
-            const response = await fetch('/api/products', {
-              method: 'POST',
+            response = await fetch(productUrl, {
+              method,
               body: productFormData
             });
-
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok) {
-              alert(result.error || 'Gagal menambah produk');
-              return;
-            }
           } else {
             if (!payload.image || !payload.image.trim()) {
               alert('Masukkan URL gambar produk');
               return;
             }
 
-            const response = await fetch('/api/products', {
-              method: 'POST',
+            response = await fetch(productUrl, {
+              method,
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
             });
+          }
 
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok) {
-              alert(result.error || 'Gagal menambah produk');
-              return;
-            }
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            alert(result.error || (isEditing ? 'Gagal mengedit produk' : 'Gagal menambah produk'));
+            return;
           }
 
           this.closeModalTambah();
           await this.loadProducts();
 
-          this.successTitle = 'Produk Berhasil Ditambahkan';
-          this.successMessage = 'Produk baru telah berhasil disimpan ke dalam daftar katalog.';
+          this.successTitle = isEditing ? 'Produk Berhasil Diperbarui' : 'Produk Berhasil Ditambahkan';
+          this.successMessage = isEditing
+            ? 'Perubahan produk telah berhasil disimpan ke dalam katalog.'
+            : 'Produk baru telah berhasil disimpan ke dalam daftar katalog.';
           this.showSuccessModal = true;
         }
       }
