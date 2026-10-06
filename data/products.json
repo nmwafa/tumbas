@@ -10,24 +10,32 @@
       {
         "name": "Bu Kartini",
         "phone": "628888888888",
+        "image": "https://cdn.pixabay.com/photo/2017/10/25/18/21/attribution-icon-2888829_1280.png",
+        "description": "ini penjual kue lompong",
         "address": "Jl. Kenangan",
         "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
       },
       {
         "name": "Bu Siti",
         "phone": "628888888888",
+        "image": "",
+        "description": "",
         "address": "Jl. Kenangan",
         "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
       },
       {
         "name": "Bu Rina",
         "phone": "628888888888",
+        "image": "",
+        "description": "",
         "address": "Jl. Kenangan",
         "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
       },
       {
         "name": "Bu Rini",
         "phone": "628888888888",
+        "image": "",
+        "description": "",
         "address": "Jl. Kenangan",
         "maps_url": "https://maps.app.goo.gl/FVqsygDYGY8m8u4B7"
       }
@@ -130,6 +138,22 @@
         "phone": "62888888888",
         "address": "winong",
         "maps_url": "https://maps.app.goo.gl/nxaFiiDqHL2ZWNGK7"
+      }
+    ]
+  },
+  {
+    "id": "prod_1791267396619",
+    "name": "makaroni",
+    "category_tab": "umum",
+    "price_range": "Rp 5.000",
+    "image": "/img/products/69237305-93ff-487d-b334-f19c888e15e4.jpg",
+    "description": "makaroni enak gurih",
+    "sellers": [
+      {
+        "name": "Paijo",
+        "phone": "6288888888888",
+        "address": "Jl. jalan",
+        "maps_url": "https://maps.google.com"
       }
     ]
   }

@@ -351,6 +351,22 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
+                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">URL Foto Penjual</label>
+                    <input x-model="formProduct.sellers[index].image" type="url"
+                      class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300"
+                      placeholder="https://...">
+                  </div>
+
+                  <div>
+                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Deskripsi Penjual</label>
+                    <textarea x-model="formProduct.sellers[index].description" rows="2"
+                      class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300"
+                      placeholder="Tentang penjual atau usahanya"></textarea>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
                     <label class="block text-[11px] font-semibold text-gray-600 mb-1">Alamat</label>
                     <input x-model="formProduct.sellers[index].address" type="text"
                       class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300"
@@ -431,6 +447,8 @@
           this.formProduct.sellers.push({
             name: '',
             phone: '',
+            image: '',
+            description: '',
             address: '',
             maps_url: ''
           });
@@ -463,6 +481,8 @@
             sellers: Array.isArray(product.sellers) ? product.sellers.map(seller => ({
               name: seller.name || '',
               phone: seller.phone || '',
+              image: seller.image || '',
+              description: seller.description || '',
               address: seller.address || '',
               maps_url: seller.maps_url || ''
             })) : []
@@ -582,6 +602,8 @@
               .map(seller => ({
                 name: seller.name.trim(),
                 phone: seller.phone.trim(),
+                image: seller.image?.trim() || '',
+                description: seller.description?.trim() || '',
                 address: seller.address.trim(),
                 maps_url: seller.maps_url.trim()
               }))
