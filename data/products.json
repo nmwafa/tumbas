@@ -108,7 +108,14 @@
     "price_range": "Rp 10.000.000",
     "image": "/img/1791160448295-sate-lontong.jpg",
     "description": "Sate lontong",
-    "sellers": []
+    "sellers": [
+      {
+        "name": "Pak Jatmiko",
+        "phone": "6288888888",
+        "address": "Jl. Jalan",
+        "maps_url": "https://maps.google.com"
+      }
+    ]
   },
   {
     "id": "prod_1791170135570",

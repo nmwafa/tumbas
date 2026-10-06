@@ -90,41 +90,43 @@
         <table class="w-full table-fixed text-left border-collapse text-sm">
           <thead class="bg-gray-50 border-b text-gray-600">
             <tr>
-              <th class="p-5" style="width: 40%;">Nama Produk</th>
-              <th class="p-4 text-center" style="width: 15%;">Kategori</th>
-              <th class="p-4 text-center" style="width: 15%;">Jumlah Penjual</th>
-              <th class="p-5 text-center" style="width: 18%;">Aksi</th>
+              <th class="w-[38%] p-2 sm:w-[40%] sm:p-5">Nama Produk</th>
+              <th class="w-[17%] p-1 text-center text-[11px] sm:w-[15%] sm:p-4 sm:text-sm">Kategori</th>
+              <th class="w-[17%] p-1 text-center text-[11px] sm:w-[15%] sm:p-4 sm:text-sm">Penjual</th>
+              <th class="w-[28%] p-2 text-center sm:w-[18%] sm:p-5">Aksi</th>
             </tr>
           </thead>
           <tbody>
             <template x-for="p in products" :key="p.id">
               <tr class="border-b hover:bg-gray-50">
-                <td class="p-5 font-semibold" x-text="p.name"></td>
-                <td class="p-4 text-center">
+                <td class="p-2 font-semibold sm:p-5" x-text="p.name"></td>
+                <td class="p-1 text-center sm:p-4">
                   <span
                     :class="p.category_tab === 'khas' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'"
-                    class="px-2 py-0.5 rounded text-xs uppercase font-bold" x-text="p.category_tab"></span>
+                    class="rounded px-1 py-0.5 text-[10px] font-bold uppercase sm:px-2 sm:text-xs" x-text="p.category_tab"></span>
                 </td>
-                <td class="p-4 text-center" x-text="p.sellers.length"></td>
-                <td class="p-5 text-center">
-                  <button @click="openModalEdit(p)"
-                    class="inline-flex items-center justify-center w-9 h-9 rounded-full text-emerald-700 hover:bg-emerald-100 transition"
+                <td class="p-1 text-center sm:p-4" x-text="p.sellers.length"></td>
+                <td class="p-1 text-center sm:p-5">
+                  <div class="flex items-center justify-center gap-0.5 whitespace-nowrap">
+                    <button @click="openModalEdit(p)"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-full text-emerald-700 sm:h-9 sm:w-9"
                     aria-label="Edit produk" title="Edit produk">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                       stroke="currentColor" stroke-width="1.8">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="m16.862 4.487 2.651 2.651M5.25 18.75l3.75-.75L19.5 7.5a1.591 1.591 0 0 0-2.25-2.25L6.75 15.75l-1.5 3z" />
                     </svg>
-                  </button>
-                  <button @click="openDeleteModal(p)"
-                    class="inline-flex items-center justify-center w-9 h-9 rounded-full text-red-600 hover:bg-red-100 transition"
+                    </button>
+                    <button @click="openDeleteModal(p)"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-full text-red-600 sm:h-9 sm:w-9"
                     aria-label="Hapus produk">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                       stroke="currentColor" stroke-width="1.8">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.49-3.75h-5.357M6.25 5.25h5.357m-5.357 0L7.5 18.75A2.25 2.25 0 0 0 9.75 21h4.5a2.25 2.25 0 0 0 2.25-2.25L17.25 5.25M9 5.25V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5v.75" />
                     </svg>
-                  </button>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </template>
