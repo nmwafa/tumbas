@@ -78,11 +78,23 @@
 
   <main class="w-full min-h-[calc(100vh-4.5rem)] bg-emerald-50/70 px-3 py-6 sm:px-4 sm:py-8">
     <div class="max-w-6xl mx-auto">
-      <div class="flex justify-between items-center mb-6">
+      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 class="text-xl font-semibold text-gray-800">Daftar Produk</h2>
-        <button @click="openModalTambah"
-          class="bg-emerald-600 text-white text-sm px-4 py-2.5 rounded-full font-medium hover:bg-emerald-700 shadow-md shadow-emerald-200 transition">Tambah
-          Produk</button>
+        <div class="flex min-w-0 gap-2 sm:w-[28rem]">
+          <label class="relative min-w-0 flex-1">
+            <span class="sr-only">Cari produk</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+            </svg>
+            <input x-model="productSearchQuery" type="search" placeholder="Cari nama produk atau kategori..."
+              class="w-full rounded-xl border border-emerald-200 bg-white py-2.5 pl-9 pr-3 text-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-300" spellcheck="false">
+          </label>
+          <button @click="openModalTambah"
+            class="shrink-0 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-emerald-200 transition hover:bg-emerald-700">Tambah
+            Produk</button>
+        </div>
       </div>
 
       <div
@@ -97,7 +109,7 @@
             </tr>
           </thead>
           <tbody>
-            <template x-for="p in products" :key="p.id">
+            <template x-for="p in filteredProducts" :key="p.id">
               <tr class="border-b hover:bg-gray-50">
                 <td class="p-2 font-semibold sm:p-5" x-text="p.name"></td>
                 <td class="p-1 text-center sm:p-4">
@@ -130,6 +142,9 @@
                 </td>
               </tr>
             </template>
+            <tr x-show="productSearchQuery.trim() && filteredProducts.length === 0">
+              <td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500">Produk tidak ditemukan.</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -369,6 +384,7 @@
     function adminDashboardApp() {
       return {
         products: [],
+        productSearchQuery: '',
         showAddProductModal: false,
         editingProduct: null,
         showLogoutConfirm: false,
@@ -401,6 +417,15 @@
         async loadProducts() {
           const res = await fetch('/api/products');
           this.products = await res.json();
+        },
+        get filteredProducts() {
+          const query = this.productSearchQuery.trim().toLowerCase();
+          if (!query) return this.products;
+
+          return this.products.filter(product =>
+            [product.name, product.category_tab]
+              .some(value => String(value || '').toLowerCase().includes(query))
+          );
         },
         addSellerField() {
           this.formProduct.sellers.push({
