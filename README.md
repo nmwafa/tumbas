@@ -1,215 +1,49 @@
-<div align="center">
-  <img src="img/logo.png" alt="Tumbas Logo" width="300">
-</div>
+# Tumbas
 
-# Tumbas - Katalog Produk UMKM Purworejo
+Katalog produk UMKM Purworejo. Pengunjung dapat mencari produk dan menghubungi penjual melalui WhatsApp atau Google Maps. Admin dapat mengelola produk dan penjual dari dashboard.
 
-Aplikasi web untuk mempromosikan produk UMKM Purworejo. Pembeli dapat melihat katalog, mencari produk, dan menghubungi penjual melalui WhatsApp atau Google Maps.
+## Fitur
 
-> **Demo:** https://tumbas-coral.vercel.app/
+- Katalog responsif dengan pencarian dan kategori produk.
+- Dashboard admin dengan login, pencarian, tambah, edit, dan hapus produk.
+- Data penjual mencakup nama, nomor WhatsApp, alamat, dan tautan Google Maps.
+- Gambar produk dapat menggunakan URL atau upload file (maksimal 4 MB).
+- Penyimpanan lokal berbasis JSON atau Vercel Blob.
 
-## Daftar Isi
+## Menjalankan Lokal
 
-- [Fitur Utama](#fitur-utama)
-- [Teknologi](#teknologi)
-- [Instalasi](#instalasi)
-- [API](#api)
-- [Struktur Proyek](#struktur-proyek)
-- [Deployment](#deployment)
+Persyaratan: Node.js 18+ dan npm.
 
-## Fitur Utama
-
-### Publik
-- 🔍 Pencarian produk real-time
-- 📂 Filter produk (Khas/Umum)
-- 📱 Tampilan responsif (desktop, tablet, mobile)
-- 💬 Integrasi WhatsApp dan Google Maps per penjual
-
-### Admin
-- 🔐 Login dengan password terenkripsi (bcryptjs)
-- ➕ CRUD produk dan penjual
-- 📸 Upload gambar (URL atau file)
-- ⚡ Rate limiting login (3x gagal = cooldown 2 menit)
-
-## Teknologi
-
-| Bagian | Stack |
-|--------|-------|
-| **Backend** | Node.js, Express 5.2.1, express-session |
-| **Frontend** | HTML5, Tailwind CSS, Alpine.js |
-| **Storage** | JSON file lokal atau Vercel Blob |
-| **Upload** | Multer 4 MB |
-
-## Instalasi
-
-### Prasyarat
-- Node.js 18+
-- npm
-
-### Setup
 ```bash
-# Clone dan install
-git clone https://github.com/nmwafa/tumbas.git
-cd tumbas
 npm install
-
-# Development
 npm run dev
-
-# Production
-npm start
 ```
 
-Akses:
-- Katalog: `http://localhost:3000/`
-- Admin: `http://localhost:3000/4dm1n`
-
-### Mengubah Password Admin
-
-```bash
-# Generate hash baru
-node --input-type=module -e "import bcrypt from 'bcryptjs'; const password='passwordbaru'; console.log(await bcrypt.hash(password, 10));"
-```
-
-Ganti password di `data/users.json`.
+Katalog tersedia di `http://localhost:3000/` dan dashboard admin di `http://localhost:3000/4dm1n`.
 
 ## API
 
-### Publik
-```http
-GET /api/products                 # Daftar semua produk
-```
+`GET /api/products` bersifat publik. Endpoint lainnya memerlukan sesi admin:
 
-### Admin (memerlukan login)
-```http
-POST   /api/auth/login             # Login
-GET    /api/auth/status            # Cek status login
-POST   /api/auth/logout            # Logout
-POST   /api/products               # Buat produk (JSON atau multipart)
-POST   /api/products/upload        # Upload gambar
-PUT    /api/products/:id           # Edit produk
-DELETE /api/products/:id           # Hapus produk
-```
+| Metode | Endpoint | Fungsi |
+| --- | --- | --- |
+| `POST` | `/api/auth/login` | Login admin |
+| `GET` | `/api/auth/status` | Status sesi |
+| `POST` | `/api/auth/logout` | Logout admin |
+| `POST` | `/api/products` | Tambah produk (JSON atau multipart) |
+| `PUT` | `/api/products/:id` | Edit produk (JSON atau multipart) |
+| `DELETE` | `/api/products/:id` | Hapus produk |
 
-### Contoh: Tambah Produk
+Data produk berisi `name`, `category_tab` (`khas` atau `umum`), `price_range`, `image`, `description`, dan array `sellers`. Setiap penjual berisi `name`, `phone`, `address`, serta `maps_url`.
 
-**JSON (gambar dari URL):**
-```bash
-curl -X POST http://localhost:3000/api/products \
-  -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -d '{
-    "name": "Kue Lompong",
-    "category_tab": "khas",
-    "price_range": "Rp 5.000",
-    "image": "https://example.com/kue.jpg",
-    "description": "Kue tradisional Purworejo",
-    "sellers": [{
-      "name": "Bu Kartini",
-      "phone": "628888888888",
-      "address": "Jl. Kenangan",
-      "maps_url": "https://maps.app.goo.gl/..."
-    }]
-  }'
-```
+## Vercel
 
-**Multipart (upload file):**
-```bash
-curl -X POST http://localhost:3000/api/products \
-  -b cookies.txt \
-  -F 'product=@product.json' \
-  -F 'image=@foto.jpg'
-```
+Deploy melalui Vercel dan atur environment variable `BLOB_READ_WRITE_TOKEN` agar data serta gambar tersimpan persisten di Vercel Blob. Atur juga `SESSION_SECRET` dengan nilai acak yang kuat untuk production. Penyimpanan file lokal ditujukan untuk development, bukan deployment serverless.
 
-## Struktur Proyek
+## Lisensi
 
-```
-tumbas/
-├── data/
-│   ├── products.json         # Data produk
-│   └── users.json            # Admin user
-├── img/products/             # Upload gambar lokal
-├── public/
-│   ├── index.html            # Katalog publik
-│   └── 404.html
-├── views/
-│   ├── admin-login.html      # Login form
-│   └── admin-dashboard.html  # Dashboard admin
-├── routes/
-│   ├── public.js             # Endpoint publik
-│   └── admin.js              # Endpoint & halaman admin
-├── lib/
-│   ├── data-store.js         # Baca/tulis JSON atau Blob
-│   └── storage.js            # Upload helper
-├── server.js                 # Entry point
-└── package.json
-```
+ISC. Lihat [LICENSE](LICENSE).
 
-## Deployment
+## Kredit
 
-### Vercel
-
-1. **Setup Blob Store:**
-   - Di Vercel dashboard → Storage → Create → Blob
-   - Copy token ke environment variable `BLOB_READ_WRITE_TOKEN`
-
-2. **Deploy:**
-   ```bash
-   npm install -g vercel
-   vercel
-   ```
-
-**Catatan:** Tanpa token Blob, aplikasi menggunakan filesystem lokal (tidak persisten di Vercel). Dengan token, data JSON dan gambar disimpan di Blob.
-
-## Keamanan
-
-✅ **Implementasi saat ini:**
-- Password hash dengan bcryptjs
-- Session cookie (24 jam)
-- Rate limiting login
-- Middleware `requireAuth` untuk endpoint admin
-- Validasi tipe file upload (JPEG, PNG, WebP, GIF, AVIF)
-
-⚠️ **Untuk production:**
-- Gunakan HTTPS
-- Simpan session secret di environment variable
-- Gunakan database untuk data produk (jangan JSON)
-- Pastikan reverse proxy terpercaya untuk `X-Forwarded-For`
-
-## Data Struktur
-
-**Produk:**
-```json
-{
-  "id": "prod_1789107738368",
-  "name": "Kue Lompong",
-  "category_tab": "khas",
-  "price_range": "Rp 5.000",
-  "image": "https://...",
-  "description": "...",
-  "sellers": [
-    {
-      "name": "Bu Kartini",
-      "phone": "628888888888",
-      "address": "Jl. Kenangan",
-      "maps_url": "https://maps.app.goo.gl/..."
-    }
-  ]
-}
-```
-
-**Admin User:**
-```json
-{
-  "id": "usr_01",
-  "username": "admin",
-  "password": "$2b$10$...",
-  "name": "Administrator"
-}
-```
-
-Default: `admin` / `admin1234`
-
----
-
-📧 **Author:** Nur Muhammad Wafa - maswafa.is-a.dev
+Nur Muhammad Wafa - maswafa.is-a.dev
