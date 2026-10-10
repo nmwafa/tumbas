@@ -170,18 +170,9 @@
             <template x-if="selectedProduct?.sellers?.length">
               <template x-for="seller in selectedProduct?.sellers" :key="seller.name">
                 <div class="p-4 border border-emerald-100 rounded-xl bg-emerald-50/50 flex flex-col gap-3">
-                  <div class="flex min-w-0 items-start gap-3">
-                    <template x-if="seller.image">
-                      <img :src="seller.image" :alt="'Foto ' + seller.name"
-                        class="h-14 w-14 shrink-0 rounded-lg border border-emerald-100 object-cover"
-                        loading="lazy" @error="$el.classList.add('hidden')">
-                    </template>
-                    <div class="min-w-0">
-                      <p class="font-bold text-sm text-gray-900" x-text="seller.name"></p>
-                      <p x-show="seller.description" class="text-xs text-gray-600 mt-1 leading-relaxed"
-                        x-text="seller.description"></p>
-                      <p class="text-xs text-gray-600 mt-1 leading-relaxed" x-text="seller.address"></p>
-                    </div>
+                  <div class="min-w-0">
+                    <p class="font-bold text-sm text-gray-900" x-text="seller.name"></p>
+                    <p class="text-xs text-gray-600 mt-1 leading-relaxed" x-text="seller.address"></p>
                   </div>
                   <div class="grid grid-cols-2 gap-2">
                     <a :href="'https://wa.me/' + seller.phone + '?text=' + encodeURIComponent('Halo, saya melihat produk ' + selectedProduct.name + ' di Katalog UMKM Purworejo.')" 
