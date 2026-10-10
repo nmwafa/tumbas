@@ -46,6 +46,27 @@ Data produk berisi `name`, `category_tab` (`khas` atau `umum`), `price_range`, `
 
 Deploy melalui Vercel dan atur environment variable `BLOB_READ_WRITE_TOKEN` agar data serta gambar tersimpan persisten di Vercel Blob. Atur juga `SESSION_SECRET` dengan nilai acak yang kuat untuk production. Penyimpanan file lokal ditujukan untuk development, bukan deployment serverless.
 
+## Admin User
+```json
+{
+  "id": "usr_01",
+  "username": "admin",
+  "password": "$2b$10$...",
+  "name": "Administrator"
+}
+```
+
+Default: `admin` / `admin1234`
+
+## Mengubah Password Admin
+
+```bash
+# Generate hash baru
+node --input-type=module -e "import bcrypt from 'bcryptjs'; const password='passwordbaru'; console.log(await bcrypt.hash(password, 10));"
+```
+
+Ganti password di `data/users.json`.
+
 ## Lisensi
 
 ISC. Lihat [LICENSE](LICENSE).
