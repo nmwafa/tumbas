@@ -1,6 +1,12 @@
+<div align="center">
+  <img src="img/logo.png" alt="Tumbas Logo" width="300">
+</div>
+
 # Tumbas
 
 Katalog produk UMKM Purworejo. Pengunjung dapat mencari produk dan menghubungi penjual melalui WhatsApp atau Google Maps. Admin dapat mengelola produk dan penjual dari dashboard.
+
+> **Demo:** https://tumbas-coral.vercel.app/
 
 ## Fitur
 
